@@ -1,8 +1,18 @@
 import NextAuth from 'next-auth'
 import TwitchProvider from 'next-auth/providers/twitch'
+import PatreonProvider from 'next-auth/providers/patreon'
 export default NextAuth({
   // Configure one or more authentication providers
   providers: [
+    PatreonProvider({
+      clientId: process.env.PATREON_ID || '',
+      clientSecret: process.env.PATREON_SECRET || '',
+      authorization: {
+        params: {
+          scope: 'campaigns campaigns.members identity.memberships',
+        },
+      },
+    }),
     TwitchProvider({
       clientId: process.env.TWITCH_ID || '',
       clientSecret: process.env.TWITCH_SECRET || '',

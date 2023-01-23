@@ -6,6 +6,7 @@ import { SessionProvider } from 'next-auth/react'
 import useFathom from '~/components/hooks/useFathom'
 import SEO from '~/../next-seo.config'
 import EmojiFavicon from '~/components/primitives/EmojiFavicon'
+import Header from '~/components/primitives/Header'
 
 function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   useFathom()
@@ -16,7 +17,10 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <meta name="theme-color" content="#fd015d" />
       </Head>
       <DefaultSeo {...SEO} />
-      <Component {...pageProps} />
+      <Header />
+      <div className="bg-blue-200 h-full">
+        <Component {...pageProps} />
+      </div>
       <EmojiFavicon emoji="🤖" />
     </SessionProvider>
   )
