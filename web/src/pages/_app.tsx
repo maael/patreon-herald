@@ -3,26 +3,35 @@ import Head from 'next/head'
 import { AppProps } from 'next/app'
 import { DefaultSeo } from 'next-seo'
 import { SessionProvider } from 'next-auth/react'
+import { QueryClient, QueryClientProvider } from 'react-query'
 import useFathom from '~/components/hooks/useFathom'
 import SEO from '~/../next-seo.config'
 import EmojiFavicon from '~/components/primitives/EmojiFavicon'
 import Header from '~/components/primitives/Header'
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { refetchInterval: 0, refetchOnMount: false, refetchOnReconnect: false, refetchOnWindowFocus: false },
+  },
+})
+
 function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   useFathom()
   return (
-    <SessionProvider session={session}>
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#fd015d" />
-      </Head>
-      <DefaultSeo {...SEO} />
-      <Header />
-      <div className="bg-blue-200 h-full">
-        <Component {...pageProps} />
-      </div>
-      <EmojiFavicon emoji="🤖" />
-    </SessionProvider>
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider session={session}>
+        <Head>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="theme-color" content="#fd015d" />
+        </Head>
+        <DefaultSeo {...SEO} />
+        <Header />
+        <div className="h-full">
+          <Component {...pageProps} />
+        </div>
+        <EmojiFavicon emoji="🤖" />
+      </SessionProvider>
+    </QueryClientProvider>
   )
 }
 
