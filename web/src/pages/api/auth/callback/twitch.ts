@@ -1,6 +1,7 @@
 import { unstable_getServerSession } from 'next-auth'
 import fetch from 'isomorphic-fetch'
 import { authOptions } from '../[...nextauth]'
+import { connection } from '~/api'
 
 export default async function (req, res) {
   const session = await unstable_getServerSession(req, res, authOptions)
@@ -9,26 +10,13 @@ export default async function (req, res) {
   const token = result.access_token
   const info = await getInfo(token)
   const twitchUser = (info?.data || [])[0]
-  /**
-   * TODO: Now we have the two "users", we can make a record tying them together
-   * Then in lookup/token/session creation, we can put them into it to make it available in the frontend
-   * We can also store the sound against the connection too, of: {campaignId, patreonId, twitchId, soundUrl}
-   * and the tray app just has to download that list
-   *
-   * Will use Patreon webhook API to register a webhook on members:pledge:create/members:pledge:delete
-   *
-   * Will also need to select the tiers to be eligible for adding sounds at
-   */
-  res.json({
-    ok: 1,
-    patreon: { id: (session as any)?.uid, login: session?.user?.name, image: session?.user?.image },
-    twitch: {
-      id: twitchUser?.id,
-      login: twitchUser?.login,
-      image: twitchUser?.profile_image_url,
-      displayName: twitchUser?.display_name,
-    },
+  await connection.createConnection((session as any)?.uid, {
+    id: twitchUser?.id,
+    username: twitchUser?.login,
+    image: twitchUser?.profile_image_url,
+    displayName: twitchUser?.display_name,
   })
+  res.redirect(307, '/')
 }
 
 async function getAccessToken(code: string) {

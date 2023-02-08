@@ -1,6 +1,7 @@
 import NextAuth, { AuthOptions } from 'next-auth'
 import TwitchProvider from 'next-auth/providers/twitch'
 import PatreonProvider from 'next-auth/providers/patreon'
+import { connection } from '~/api'
 
 /**
  * We hijack NextAuth with a route at /api/auth/callback/twitch which takes a higher precedence
@@ -19,22 +20,26 @@ import PatreonProvider from 'next-auth/providers/patreon'
  */
 
 export const authOptions: AuthOptions = {
+  debug: true,
   // Configure one or more authentication providers
   providers: [
     PatreonProvider({
       clientId: process.env.PATREON_ID || '',
       clientSecret: process.env.PATREON_SECRET || '',
+      userinfo: {
+        url: `https://www.patreon.com/api/oauth2/v2/identity?${encodeURI('fields[user]=full_name,thumb_url')}`,
+      },
       profile(profile) {
         return {
           id: profile.data.id,
           name: profile.data.attributes.full_name,
-          email: profile.data.attributes.email,
-          image: profile.data.attributes.image_url,
+          email: undefined,
+          image: profile.data.attributes.thumb_url,
         }
       },
       authorization: {
         params: {
-          scope: 'campaigns campaigns.members identity.memberships',
+          scope: 'identity campaigns campaigns.members identity.memberships w:campaigns.webhook',
         },
       },
     }),
@@ -66,8 +71,18 @@ export const authOptions: AuthOptions = {
     // ...add more providers here
   ],
   callbacks: {
+    async signIn({ profile }) {
+      if (!profile) return false
+      const profileData = (profile as any).data
+      const tidyProfile = {
+        id: profileData.id,
+        username: profileData.attributes.full_name,
+        image: profileData.attributes.image_url,
+      }
+      await connection.createInitial(tidyProfile)
+      return true
+    },
     async jwt({ token, account }) {
-      console.info('[jwt]', { token, account })
       if (account) {
         token.accessToken = account?.access_token
         token.refreshToken = account?.refresh_token
@@ -75,12 +90,14 @@ export const authOptions: AuthOptions = {
       }
       return token
     },
-    async session({ session, token, user }) {
-      console.info('[session]', { session, token, user })
-      // eslint-disable-next-line @typescript-eslint/no-extra-semi
-      ;(session as any).accessToken = token.accessToken
-      ;(session as any).refreshToken = token.refreshToken
-      ;(session as any).uid = token.uid
+    async session({ session, token }) {
+      const anySession = session as any
+      anySession.accessToken = token.accessToken
+      anySession.refreshToken = token.refreshToken
+      anySession.uid = token.uid
+      if (!anySession.twitch) {
+        anySession.twitch = await connection.getTwitchConnectionByPatreonId(token.uid as string)
+      }
       return session
     },
   },
