@@ -7,7 +7,7 @@ export default function Alert() {
   const seenList = useRef<Set<string>>(new Set())
   const ref = useRef<HTMLAudioElement>(null)
   const {
-    query: { id },
+    query: { id, twitch },
   } = useRouter()
   const { data } = useQuery(['alerts', id], {
     queryFn: async () =>
@@ -26,7 +26,7 @@ export default function Alert() {
         }),
   })
   useEffect(() => {
-    const client = new tmi.Client({ channels: ['odialo'] })
+    const client = new tmi.Client({ channels: [twitch] })
 
     client.connect()
 
@@ -45,7 +45,7 @@ export default function Alert() {
     return () => {
       client.disconnect()
     }
-  }, [data])
+  }, [data, twitch])
 
   return (
     <audio controls ref={ref} className="invisible">

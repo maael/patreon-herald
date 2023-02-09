@@ -65,7 +65,12 @@ export default function CreatorManage() {
               <img src={campaign.attributes.avatar_photo_url} className="w-20 aspect-square rounded-full" />
               <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
               <h3>{campaign.attributes.creation_name}</h3>
-              <input disabled value={`https://patreon-herald.mael-tech.com/obs/alert/${campaign.id}`} />
+              <input
+                disabled
+                value={`https://patreon-herald.mael.tech/obs/alert/${(session.data as any).twitch.username}/${
+                  campaign.id
+                }`}
+              />
               {internalCampaignData?.data?.has(campaign.id) ? (
                 <button
                   onClick={() => {
