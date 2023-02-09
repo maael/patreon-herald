@@ -3,24 +3,7 @@ import TwitchProvider from 'next-auth/providers/twitch'
 import PatreonProvider from 'next-auth/providers/patreon'
 import { connection } from '~/api'
 
-/**
- * We hijack NextAuth with a route at /api/auth/callback/twitch which takes a higher precedence
- * Then we can use the session for Patreon info (need to get id ideally) and use the code in the
- * query to get the twitch user information, and then store a record connecting them
- *
- * Then in the patreon provider/callbacks we can check to see if this record exists in mongo
- * and if it does we can use that to get/set the twitch information on the token, skipping
- * if it's already present
- *
- * ISSUE: Can't get Patreon ID into session to get via getServerSession in twitch callback route
- *
- * IDEA: Maybe store patreon emails for notifications - new approval of sounds etc
- * IDEA: Or instead of email, we can just have the tray app check for it and display a notification
- * if it's needed - would need to see if possible
- */
-
 export const authOptions: AuthOptions = {
-  debug: true,
   // Configure one or more authentication providers
   providers: [
     PatreonProvider({

@@ -29,7 +29,11 @@ const internalApi: { [k: string]: NextApiHandler } = {
     if (!session) {
       return res.status(400).json({ error: 'Needs session' })
     }
-    const internalCampaign = await campaigns.createForPatreonCampaign((session as any).uid, req.body)
+    const internalCampaign = await campaigns.createForPatreonCampaign(
+      (session as any).uid,
+      req.body,
+      (session as any).accessToken
+    )
     res.json({ campaign: internalCampaign })
   },
   /**

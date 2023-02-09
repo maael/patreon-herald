@@ -66,14 +66,46 @@ export const campaigns = {
   /**
    * When a creator enables for a campaign
    */
-  createForPatreonCampaign: async (patreonId: string, patreonCampaignData: any) => {
+  createForPatreonCampaign: async (patreonId: string, patreonCampaignData: any, accessToken?: string) => {
     await dbConnect()
-    return CampaignModel.create({
+    const created = await CampaignModel.create({
       patreonCampaignId: patreonCampaignData.id,
       ownerPatreonId: patreonId,
       sounds: {},
       isActive: true,
     })
+    try {
+      if (accessToken) {
+        const res = await fetch('https://www.patreon.com/api/oauth2/api/oauth2/v2/webhooks', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: {
+              type: 'webhook',
+              attributes: {
+                triggers: ['members:delete', 'posts:publish', 'posts:update'],
+                uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${created._id}`,
+              },
+              relationships: {
+                campaign: {
+                  data: { type: 'campaign', id: patreonCampaignData.id },
+                },
+              },
+            },
+          }),
+        })
+        const data = await res.json()
+        console.info('[createInitial]', data)
+        const webhookSecret = data?.data?.attributes.secret
+        await CampaignModel.updateOne({ _id: created._id }, { webhookSecret })
+      }
+    } catch (e) {
+      console.warn('[createInitial:webhook:error]', patreonId, e)
+    }
+    return created
   },
   /**
    * When a patreon uploads/adds their sound for approval
