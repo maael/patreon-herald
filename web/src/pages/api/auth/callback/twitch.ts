@@ -30,7 +30,7 @@ async function getAccessToken(code: string) {
       client_id: process.env.TWITCH_ID || '',
       client_secret: process.env.TWITCH_SECRET || '',
       grant_type: 'authorization_code',
-      redirect_uri: 'http://localhost:3000/api/auth/callback/twitch',
+      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/twitch`,
     }),
   }).then((r) => r.json())
 }
