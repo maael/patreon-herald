@@ -76,7 +76,7 @@ export const campaigns = {
     })
     try {
       if (accessToken) {
-        const res = await fetch('https://www.patreon.com/api/oauth2/api/oauth2/v2/webhooks', {
+        const res = await fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
