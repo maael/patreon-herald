@@ -1,15 +1,18 @@
 import { useQuery } from 'react-query'
+import SoundUpload from './SoundUpload'
 
 export default function ManageCampaign({
   campaign,
   accessToken,
   campaignData,
   internalCampaign,
+  refetch,
 }: {
   internalCampaign: any
   campaign: any
   campaignData: any
   accessToken?: string
+  refetch: () => void
 }) {
   const { data: membersData } = useQuery(['patreon', 'creator', 'members', campaign?.id], {
     enabled: !!accessToken && !!campaign?.id,
@@ -25,7 +28,7 @@ export default function ManageCampaign({
     },
   })
   const rewardIds = new Set(campaign?.relationships?.rewards?.data?.map((r) => r.id))
-  const campaignSounds = new Map(internalCampaign?.sounds.map((s) => [s.patreonId, s]))
+  const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
   return (
     <div className="flex flex-col gap-2 justify-center items-center">
       <h1>Management</h1>
@@ -59,21 +62,50 @@ export default function ManageCampaign({
       <h2>
         {membersData?.length || 0} Pledge{membersData?.length === 1 ? '' : 's'}
       </h2>
-      <pre>{JSON.stringify(internalCampaign, undefined, 2)}</pre>
       {membersData?.map((pledge) => {
-        const sound = campaignSounds.get(pledge.user.id)
+        const sound = campaignSounds.get(pledge.user.id) as any
         return (
           <div key={pledge.user.id} className="flex flex-row gap-2 items-center">
             <img src={pledge.user.thumb_url} className="w-8 aspect-square rounded-full" />
             <div>{pledge.user.full_name}</div>
             <div>{pledge.tiers.map((t) => t.title).join(', ')}</div>
-            <div>{sound ? 'Has sound!' : 'No sound yet!'}</div>
             <div>
-              <button>Approve</button>
+              <button
+                onClick={async () => {
+                  await fetch(
+                    `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                    {
+                      method: 'PATCH',
+                    }
+                  )
+                  refetch()
+                }}
+              >
+                {sound?.isApproved ? 'Approved' : 'Approve'}
+              </button>
             </div>
             <div>
-              <button>Reject</button>
+              <button
+                onClick={async () => {
+                  await fetch(
+                    `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                    {
+                      method: 'DELETE',
+                    }
+                  )
+                  refetch()
+                }}
+              >
+                {sound?.isRejected ? 'Rejected' : 'Reject'}
+              </button>
             </div>
+            <SoundUpload
+              campaignId={internalCampaign?.patreonCampaignId}
+              patronId={pledge?.user?.id}
+              existingSound={sound?.sound ? `https://files.mael-cdn.com${sound.sound}` : undefined}
+              autoApprove
+              refetch={refetch}
+            />
           </div>
         )
       })}

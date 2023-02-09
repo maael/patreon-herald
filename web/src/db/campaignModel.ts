@@ -6,13 +6,12 @@ export interface Campaign {
   patreonCampaignId: string
   ownerPatreonId: string
   sounds: {
-    patreonId: string
-    twitchId: string
-    sound: string
-    isApproved: boolean
-    isRejected: boolean
-    approvedAt: string
-  }[]
+    [k: string]: {
+      sound: string
+      isApproved: boolean
+      isRejected: boolean
+    }
+  }
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -26,17 +25,13 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
     patreonCampaignId: { required: true, type: String },
     ownerPatreonId: { required: true, type: String },
     sounds: {
-      default: [],
-      type: [
-        {
-          patreonId: { required: true, type: String },
-          twitchId: { required: true, type: String },
-          sound: String,
-          isApproved: { type: Boolean, default: false },
-          isRejected: { type: Boolean, default: false },
-          approvedAt: String,
-        },
-      ],
+      default: {},
+      type: Map,
+      of: {
+        sound: String,
+        isApproved: { type: Boolean, default: false },
+        isRejected: { type: Boolean, default: false },
+      },
     },
     isActive: {
       type: Boolean,

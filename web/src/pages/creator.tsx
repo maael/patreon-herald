@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import { useQuery } from 'react-query'
 import { useRouter } from 'next/router'
 import ManageCampaign from '~/components/primitives/ManageCampaign'
@@ -16,6 +16,9 @@ export default function CreatorManage() {
         const result = await fetch(`/api/patreon/campaigns`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         }).then((r) => r.json())
+        if (result.errors) {
+          await signOut()
+        }
         return result
       } catch (e) {
         return { error: e.toString(), accessToken }
@@ -44,6 +47,7 @@ export default function CreatorManage() {
   React.useEffect(() => {
     setManaging(asPath.split('#')[1])
   }, [asPath])
+  console.info(campaignData)
   return (
     <div className="max-w-3xl flex flex-col gap-2 mx-auto pt-5 pb-10">
       <Link href="/">
@@ -54,13 +58,14 @@ export default function CreatorManage() {
       <Twitch />
       <h1 className="text-center text-5xl">Creator</h1>
       <h2 className="text-center text-3xl mb-5">Manage your campaigns</h2>
-      {campaignData?.data.map((campaign) => {
+      {campaignData?.data?.map((campaign) => {
         return (
           <div key={campaign.id} className="bg-gray-200 rounded-md shadow-md px-10 py-5">
             <div className="flex flex-col justify-center items-center gap-2 text-center">
               <img src={campaign.attributes.avatar_photo_url} className="w-20 aspect-square rounded-full" />
               <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
               <h3>{campaign.attributes.creation_name}</h3>
+              <input disabled value={`https://patreon-herald.mael-tech.com/obs/alert/${campaign.id}`} />
               {internalCampaignData?.data?.has(campaign.id) ? (
                 <button
                   onClick={() => {
@@ -97,6 +102,7 @@ export default function CreatorManage() {
                   campaign={campaign}
                   accessToken={accessToken}
                   campaignData={campaignData}
+                  refetch={refetchInternalCampaignData}
                 />
               ) : null}
             </div>
