@@ -1,7 +1,7 @@
 import { NextApiHandler } from 'next'
 
 const handler: NextApiHandler = async (req, res) => {
-  console.info('[webhook]', req.query.campaignMongoId, req.body)
+  console.info('[webhook:delete]', req.query.campaignMongoId, req.body)
   /**
    * TODO: Update the campaign up removing/disabling this user
    */

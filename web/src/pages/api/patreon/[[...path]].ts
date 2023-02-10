@@ -1,13 +1,10 @@
 import { NextApiHandler, NextApiRequest } from 'next'
 import fetch from 'isomorphic-fetch'
+import { patreon } from '~/api'
 
 function getPath(pathParts) {
   if (pathParts[0] === 'campaigns') {
     return `/api/current_user/campaigns?include=rewards,creator`
-  } else if (pathParts[0] === 'members') {
-    return `/v2/campaigns/${pathParts[1]}/members?include=currently_entitled_tiers,user&${encodeURI(
-      'fields[user]=full_name,thumb_url&fields[tier]=title,amount_cents'
-    )}`
   } else if (pathParts[0] === 'memberships') {
     return `/v2/identity?include=memberships,campaign,memberships.campaign,memberships.campaign.creator&${encodeURI(
       'fields[user]=full_name,thumb_url&fields[member]=currently_entitled_amount_cents,full_name,patron_status&fields[campaign]=creation_name,image_small_url,image_url,summary'
@@ -18,22 +15,7 @@ function getPath(pathParts) {
 }
 
 function mapResult(pathParts, result) {
-  if (pathParts[0] === 'members') {
-    const linkedUsers = new Map<string, any>(
-      result.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
-    )
-    const linkedTiers = new Map<string, any>(
-      result.included.filter((r) => r.type === 'tier').map((r) => [r.id, { ...r.attributes, id: r.id }])
-    )
-    return result.data.map((d) => {
-      return {
-        tiers: d.relationships.currently_entitled_tiers.data
-          .map((d) => ({ ...(linkedTiers.get(d.id) || {}), id: d.id }))
-          .filter(Boolean),
-        user: { ...(linkedUsers.get(d.relationships.user.data.id) || {}), id: d.relationships.user.data.id },
-      }
-    })
-  } else if (pathParts[0] === 'memberships') {
+  if (pathParts[0] === 'memberships') {
     const linkedUsers = new Map<string, any>(
       result.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
     )
@@ -74,10 +56,15 @@ async function patreonRequest(req: NextApiRequest, path: string) {
 
 const handler: NextApiHandler = async (req, res) => {
   try {
-    const patreonPath = getPath(req.query.path || [])
-    if (!patreonPath) throw new Error('No matching path')
-    const result = mapResult(req.query.path || [], await patreonRequest(req, patreonPath))
-    res.json(result)
+    const pathParts = req.query.path || []
+    if (pathParts[0] === 'members') {
+      res.json(await patreon.getInitialMembers(`${(req.headers.authorization?.split(' ') || [])[1]}`, pathParts[1]))
+    } else {
+      const patreonPath = getPath(pathParts)
+      if (!patreonPath) throw new Error('No matching path')
+      const result = mapResult(req.query.path || [], await patreonRequest(req, patreonPath))
+      res.json(result)
+    }
   } catch (e) {
     res.json({ error: e })
   }

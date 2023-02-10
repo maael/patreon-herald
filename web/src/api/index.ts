@@ -76,31 +76,8 @@ export const campaigns = {
     })
     try {
       if (accessToken) {
-        const res = await fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            data: {
-              type: 'webhook',
-              attributes: {
-                triggers: ['members:delete', 'posts:publish', 'posts:update'],
-                uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${created._id}`,
-              },
-              relationships: {
-                campaign: {
-                  data: { type: 'campaign', id: patreonCampaignData.id },
-                },
-              },
-            },
-          }),
-        })
-        const data = await res.json()
-        console.info('[createInitial]', data)
-        const webhookSecret = data?.data?.attributes.secret
-        await CampaignModel.updateOne({ _id: created._id }, { webhookSecret })
+        const webhookSecrets = await patreon.makeWebhooks(accessToken, created._id.toString(), patreonCampaignData.id)
+        await CampaignModel.updateOne({ _id: created._id }, { webhookSecrets })
       }
     } catch (e) {
       console.warn('[createInitial:webhook:error]', patreonId, e)
@@ -167,5 +144,112 @@ export const campaigns = {
   getUserSounds: async (patreonCampaignIds: string[], patronId: string) => {
     await dbConnect()
     return CampaignModel.find({ patreonCampaignId: { $in: patreonCampaignIds } }, { [`sounds.${patronId}`]: 1 })
+  },
+}
+
+export const patreon = {
+  makeWebhooks: async (accessToken: string, createdCampaignId: string, campaignId: string) => {
+    const data = await Promise.all([
+      fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: {
+            type: 'webhook',
+            attributes: {
+              triggers: ['members:create', 'members:update'],
+              uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${createdCampaignId}/upsert`,
+            },
+            relationships: {
+              campaign: {
+                data: { type: 'campaign', id: campaignId },
+              },
+            },
+          },
+        }),
+      }).then((r) => r.json()),
+      fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: {
+            type: 'webhook',
+            attributes: {
+              triggers: ['members:delete'],
+              uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${createdCampaignId}/delete`,
+            },
+            relationships: {
+              campaign: {
+                data: { type: 'campaign', id: campaignId },
+              },
+            },
+          },
+        }),
+      }).then((r) => r.json()),
+    ])
+    console.info('[create:webhooks]', data)
+    const webhookSecrets = { upsert: data[0].data?.attributes.secret, delete: data[1].data?.attributes.secret }
+    return webhookSecrets
+  },
+  getWebhooks: async (accessToken: string) => {
+    return fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    }).then((r) => r.json())
+  },
+  getInitialMembers: async (accessToken: string, campaignId: string) => {
+    let cursor = null
+    let data = []
+    try {
+      do {
+        const page = await patreon.getMembersPage(accessToken, campaignId, cursor)
+        console.info(accessToken, JSON.stringify(page, undefined, 2))
+        const linkedUsers = new Map<string, any>(
+          page.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
+        )
+        const linkedTiers = new Map<string, any>(
+          page.included.filter((r) => r.type === 'tier').map((r) => [r.id, { ...r.attributes, id: r.id }])
+        )
+        data = data.concat(
+          page.data.map((d) => {
+            return {
+              tiers: d.relationships.currently_entitled_tiers.data
+                .map((d) => ({ ...(linkedTiers.get(d.id) || {}), id: d.id }))
+                .filter(Boolean),
+              user: { ...(linkedUsers.get(d.relationships.user.data.id) || {}), id: d.relationships.user.data.id },
+            }
+          })
+        )
+        cursor = page?.meta?.pagination?.cursors?.next
+      } while (cursor !== null)
+      return data
+    } catch (e) {
+      console.error(e)
+      return []
+    }
+  },
+  getMembersPage: async (accessToken: string, campaignId: string, cursor: string | null) => {
+    return fetch(
+      `https://www.patreon.com/api/oauth2/v2/campaigns/${campaignId}/members?${encodeURI(
+        `include=currently_entitled_tiers,user&fields[user]=full_name,thumb_url&fields[tier]=title,amount_cents&page[count]=500${
+          cursor ? '&page[cursor]=${cursor}' : ''
+        }`
+      )}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    ).then((r) => r.json())
   },
 }
