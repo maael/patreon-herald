@@ -27,7 +27,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <DefaultSeo {...SEO} />
         <Header />
         <Component {...pageProps} />
-        <EmojiFavicon emoji="🤖" />
+        <EmojiFavicon emoji="🎺" />
       </SessionProvider>
     </QueryClientProvider>
   )

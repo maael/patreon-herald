@@ -1,3 +1,4 @@
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
 import { useQuery } from 'react-query'
 import SoundUpload from './SoundUpload'
 
@@ -31,10 +32,15 @@ export default function ManageCampaign({
   const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
   return (
     <div className="flex flex-col gap-2 justify-center items-center">
-      <h1>Management</h1>
       <div className="flex flex-col gap-1 justify-center items-center">
-        <div>Status: {internalCampaign?.isActive ? 'Y' : 'N'}</div>
-        <button>Disable</button>
+        <div className="flex flex-row gap-1 justify-center items-center">
+          Status:{' '}
+          {internalCampaign?.isActive ? (
+            <FaCheckCircle className="text-green-600" />
+          ) : (
+            <FaTimesCircle className="text-red-600" />
+          )}
+        </div>
         <div>
           Starting Tier:
           <select>

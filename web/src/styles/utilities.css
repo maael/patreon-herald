@@ -25,3 +25,22 @@
   font-family: 'GwTwo';
   src: url(/fonts/GWTwoFont.ttf);
 }
+
+@font-face {
+  font-family: 'BadScript';
+  src: url(/fonts/BadScript-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url(/fonts/Dosis/Dosis-Regular.ttf);
+}
+
+.font-badscript {
+  font-family: BadScript, Arial, Helvetica, sans-serif;
+  line-height: 1.1 !important;
+}
+
+.font-dosis {
+  font-family: Dosis, Arial, Helvetica, sans-serif;
+}
