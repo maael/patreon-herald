@@ -12,9 +12,14 @@ export default function Index() {
     }
   }, [session.status, router])
   return (
-    <Banner>
-      <h1 className="text-6xl font-bold font-badscript">Patreon Herald</h1>
-      <p className="text-2xl font-bold">Time to roll out the carpet</p>
-    </Banner>
+    <>
+      <Banner className="h-1/3">
+        <h1 className="text-6xl font-bold font-badscript">Patreon Herald</h1>
+        <p className="text-2xl font-bold">Time to roll out the carpet</p>
+      </Banner>
+      <div className="flex justify-center items-center text-center flex-1">
+        <p className="font-badscript text-7xl">This is a work in progress</p>
+      </div>
+    </>
   )
 }

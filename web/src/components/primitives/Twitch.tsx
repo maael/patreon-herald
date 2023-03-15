@@ -12,6 +12,7 @@ export default function Twitch() {
             <img
               src={session?.data?.twitch?.image}
               className="w-10 aspect-square rounded-full drop-shadow-lg border-2 border-purple-600"
+              title={`Connected to ${session?.data?.twitch?.displayName}`}
             />
           ) : (
             <div className="w-10 aspect-square rounded-full shadow border-2 bg-gray-200 border-purple-600 text-purple-600 flex justify-center items-center">

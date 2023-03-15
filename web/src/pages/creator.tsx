@@ -8,7 +8,7 @@ import { TwitchPrompt } from '~/components/primitives/Twitch'
 import Link from 'next/link'
 import Banner from '~/components/primitives/Banner'
 import useRestrictedRoute from '~/components/hooks/useRestrictRoute'
-import { FaCheck, FaChevronCircleDown, FaChevronCircleUp, FaCopy, FaExclamationCircle } from 'react-icons/fa'
+import { FaCheck, FaChevronCircleDown, FaChevronCircleUp, FaCopy, FaPlus, FaTimes } from 'react-icons/fa'
 import useCopyToClipboard from '~/components/hooks/useCopyToClipboard'
 
 export default function CreatorManage() {
@@ -53,23 +53,22 @@ export default function CreatorManage() {
   React.useEffect(() => {
     setManaging(asPath.split('#')[1])
   }, [asPath])
-  console.info(campaignData)
   return (
     <>
-      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-32">
-        <h1 className="text-6xl font-bold font-badscript px-20">Creator</h1>
+      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
+        <h1 className="text-6xl font-bold font-badscript px-4 sm:px-20">Creator</h1>
       </Banner>
-      <div className="max-w-3xl flex flex-col gap-2 mx-auto pt-5 pb-10">
-        <Link href="/">
+      <div className="max-w-3xl flex flex-col gap-2 mx-auto pt-5 pb-10 w-full">
+        <Link href="/patron">
           <a className="bg-yellow-200 text-yellow-700 text-center px-3 py-2 text-sm">
             Looking for the Patron view? Swap to the patron view here →
           </a>
         </Link>
         <TwitchPrompt />
-        <h2 className="text-center text-3xl mb-5">Manage your campaigns</h2>
+        <h2 className="text-center text-4xl mt-5 mb-2">Manage your campaigns</h2>
         {campaignData?.data?.map((campaign) => (
           <Campaign
-            key={campaign?._id}
+            key={campaign?.id}
             session={session}
             campaign={campaign}
             internalCampaignData={internalCampaignData}
@@ -97,71 +96,83 @@ function Campaign({
 }) {
   const obsUrl = `https://patreon-herald.mael.tech/obs/alert/${(session?.data as any)?.twitch?.username}/${campaign.id}`
   const [copied, copy] = useCopyToClipboard(obsUrl)
+  const isActive = internalCampaignData?.data?.has(campaign.id)
   return (
-    <div key={campaign.id} className="bg-gray-200 rounded-md shadow-md px-10 py-5">
-      <div className="flex flex-col justify-center items-center gap-2 text-center">
-        <img src={campaign.attributes.avatar_photo_url} className="w-20 aspect-square rounded-full" />
-        <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
-        <h3>{campaign.attributes.creation_name}</h3>
-        <div className="flex flow-row flex-nowrap drop-shadow">
-          <div className="bg-black rounded-l-md text-white flex justify-center items-center px-3 gap-2">
-            <SiObsstudio /> OBS Source URL
-          </div>
-          <input className="text-ellipsis border bg-white px-3 py-1 border border-black" disabled value={obsUrl} />
-          <button
-            className="bg-black text-white flex justify-center items-center px-3"
-            style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-            onClick={() => copy()}
-          >
-            {copied ? <FaCheck /> : <FaCopy />}
+    <>
+      <div className="bg-white w-full drop-shadow-lg rounded-lg relative mt-12 border border-grey-300 p-4 flex flex-col gap-2 z-50">
+        <img
+          src={campaign.attributes.avatar_photo_url}
+          className="rounded-full border-2 border-grey-300 bg-white w-20 h-20 absolute -top-12 left-1/2 -translate-x-1/2 drop-shadow-lg"
+        />
+        {isActive ? (
+          <button className="bg-red-600 absolute top-4 right-4 text-sm px-3 py-1 group h-8">
+            <FaTimes />
+            <span className="hidden group-hover:block">Disable</span>
           </button>
-        </div>
-        {internalCampaignData?.data?.has(campaign.id) ? (
-          <div className="flex flex-row justify-around items-center w-full">
-            <button
-              className="gap-2"
-              onClick={() => {
-                if (managing) {
-                  setManaging(undefined)
-                } else {
-                  window.location.hash = campaign.id
-                  setManaging(campaign.id)
-                }
-              }}
-            >
-              {managing ? <FaChevronCircleUp /> : <FaChevronCircleDown />} Manage
-            </button>
-            <button className="bg-red-600">
-              <FaExclamationCircle /> Disable
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={async () => {
-              const res = await fetch('/api/internal/campaigns', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(campaign),
-              })
-              await res.json()
-              await refetchInternalCampaignData()
-            }}
-          >
-            Enable
-          </button>
-        )}
-        {managing ? (
-          <ManageCampaign
-            internalCampaign={internalCampaignData?.data?.get(campaign.id)}
-            campaign={campaign}
-            accessToken={accessToken}
-            campaignData={campaignData}
-            refetch={refetchInternalCampaignData}
-          />
         ) : null}
+        <div>
+          <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
+          <h3>{campaign.attributes.creation_name}</h3>
+        </div>
+        <div className="w-full flex flex-row justify-between items-center">
+          {isActive ? (
+            <>
+              <button
+                className="gap-2"
+                onClick={() => {
+                  if (managing) {
+                    setManaging(undefined)
+                  } else {
+                    window.location.hash = campaign.id
+                    setManaging(campaign.id)
+                  }
+                }}
+              >
+                {managing ? <FaChevronCircleUp /> : <FaChevronCircleDown />} Manage
+              </button>
+              <div className="flex flow-row flex-nowrap drop-shadow">
+                <div className="bg-orange-400 rounded-l-md text-white flex justify-center items-center px-3 gap-2">
+                  <SiObsstudio /> OBS Source URL
+                </div>
+                <button
+                  className="bg-black text-white flex justify-center items-center px-3"
+                  style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                  onClick={() => copy()}
+                >
+                  {copied ? <FaCheck /> : <FaCopy />}
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={async () => {
+                const res = await fetch('/api/internal/campaigns', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(campaign),
+                })
+                await res.json()
+                await refetchInternalCampaignData()
+              }}
+              className="bg-green-600 mx-auto text-xl"
+            >
+              <FaPlus /> Enable
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+
+      {managing ? (
+        <ManageCampaign
+          internalCampaign={internalCampaignData?.data?.get(campaign.id)}
+          campaign={campaign}
+          accessToken={accessToken}
+          campaignData={campaignData}
+          refetch={refetchInternalCampaignData}
+        />
+      ) : null}
+    </>
   )
 }

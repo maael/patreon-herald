@@ -46,10 +46,10 @@ export default function Index() {
   })
   return (
     <>
-      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-32">
-        <h1 className="text-6xl font-bold font-badscript px-20">Patreon</h1>
+      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
+        <h1 className="text-6xl font-bold font-badscript px-4 sm:px-28">Patron</h1>
       </Banner>
-      <div className="py-5 max-w-3xl mx-auto flex flex-col gap-2">
+      <div className="py-5 max-w-3xl mx-auto flex flex-col gap-2 w-full">
         <Link href="/creator">
           <a className="bg-yellow-200 text-yellow-700 text-center px-3 py-2 text-sm">
             Are you a creator? Swap to the creator view here →

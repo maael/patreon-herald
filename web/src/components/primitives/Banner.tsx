@@ -10,7 +10,7 @@ export default function Banner({
   return (
     <div
       className={cls(
-        'bg-orange-400 grid grid-cols-6 md:grid-cols-8 justify-center items-center h-1/3 relative drop-shadow-xl',
+        'bg-orange-400 grid grid-cols-8 md:grid-cols-8 justify-center items-center relative drop-shadow-xl',
         className
       )}
     >
