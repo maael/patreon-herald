@@ -20,8 +20,17 @@ const handler: NextApiHandler = async (req, res) => {
           id: '526532',
           type: 'webhook',
           attributes: {
-            triggers: ['members:delete', 'posts:publish', 'posts:update'],
-            uri: 'https://patreon-herald.mael.tech/api/webhooks/patreon/63e52b8e8a76b230774bab57',
+            triggers: [
+              'members:create',
+              'members:update',
+              'members:delete',
+              'members:pledge:create',
+              'members:pledge:update',
+              'members:pledge:delete',
+              'posts:publish',
+              'posts:update',
+            ],
+            uri: 'https://patreon-herald.mael.tech/api/webhooks/patreon/63e52b8e8a76b230774bab57/upsert',
             paused: 'false', // <- do this if you’re attempting to send missed events, see NOTE in Example Webhook Payload
           },
         },

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import * as React from 'react'
 import { signOut, useSession } from 'next-auth/react'
 import { SiObsstudio } from 'react-icons/si'

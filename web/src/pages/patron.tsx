@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { signOut, useSession } from 'next-auth/react'
 import * as React from 'react'
 import { useQuery } from 'react-query'
