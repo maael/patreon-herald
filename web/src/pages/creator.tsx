@@ -53,19 +53,26 @@ export default function CreatorManage() {
   React.useEffect(() => {
     setManaging(asPath.split('#')[1])
   }, [asPath])
+  React.useEffect(() => {
+    if (campaignData?.data && campaignData?.data.length === 1) {
+      const campaign = campaignData?.data[0]
+      window.location.hash = campaign.id
+      setManaging(campaign.id)
+    }
+  }, [campaignData?.data])
   return (
     <>
       <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
         <h1 className="text-6xl font-bold font-badscript px-4 sm:px-20">Creator</h1>
       </Banner>
-      <div className="max-w-3xl flex flex-col gap-2 mx-auto pt-5 pb-10 w-full">
+      <div className="max-w-3xl flex flex-col gap-2 mx-auto px-2 pt-5 pb-10 w-full">
         <Link href="/patron">
-          <a className="bg-yellow-200 text-yellow-700 text-center px-3 py-2 text-sm">
+          <a className="bg-yellow-200 text-yellow-800 text-center px-3 py-2 text-sm drop-shadow-md rounded-md hover:scale-105 transition-transform">
             Looking for the Patron view? Swap to the patron view here →
           </a>
         </Link>
         <TwitchPrompt />
-        <h2 className="text-center text-4xl mt-5 mb-2">Manage your campaigns</h2>
+        <h2 className="text-center text-4xl mt-3 mb-2">Manage your campaigns</h2>
         {campaignData?.data?.map((campaign) => (
           <Campaign
             key={campaign?.id}
@@ -79,6 +86,9 @@ export default function CreatorManage() {
             campaignData={campaignData}
           />
         ))}
+        {campaignData?.data && campaignData?.data.length === 0 ? (
+          <div className="text-2xl text-center">No campaigns to see here</div>
+        ) : null}
       </div>
     </>
   )
@@ -94,7 +104,8 @@ function Campaign({
   accessToken,
   campaignData,
 }) {
-  const obsUrl = `https://patreon-herald.mael.tech/obs/alert/${(session?.data as any)?.twitch?.username}/${campaign.id}`
+  const twitchUserName = (session?.data as any)?.twitch?.username
+  const obsUrl = `https://patreon-herald.mael.tech/obs/alert/${twitchUserName}/${campaign.id}`
   const [copied, copy] = useCopyToClipboard(obsUrl)
   const isActive = internalCampaignData?.data?.has(campaign.id)
   return (
@@ -132,15 +143,17 @@ function Campaign({
               </button>
               <div className="flex flow-row flex-nowrap drop-shadow">
                 <div className="bg-orange-400 rounded-l-md text-white flex justify-center items-center px-3 gap-2">
-                  <SiObsstudio /> OBS Source URL
+                  <SiObsstudio /> {twitchUserName ? 'OBS Source URL' : 'Connect Twitch Account for OBS Source'}
                 </div>
-                <button
-                  className="bg-black text-white flex justify-center items-center px-3"
-                  style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-                  onClick={() => copy()}
-                >
-                  {copied ? <FaCheck /> : <FaCopy />}
-                </button>
+                {twitchUserName ? (
+                  <button
+                    className="bg-black text-white flex justify-center items-center px-3"
+                    style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                    onClick={() => copy()}
+                  >
+                    {copied ? <FaCheck /> : <FaCopy />}
+                  </button>
+                ) : null}
               </div>
             </>
           ) : (

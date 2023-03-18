@@ -1,7 +1,7 @@
 import { signOut, useSession } from 'next-auth/react'
 import * as React from 'react'
 import { useQuery } from 'react-query'
-import { FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
+import { FaSpinner, FaCheckCircle, FaTimesCircle, FaCheck, FaTimes } from 'react-icons/fa'
 import cls from 'classnames'
 import { TwitchPrompt } from '~/components/primitives/Twitch'
 import Link from 'next/link'
@@ -49,14 +49,17 @@ export default function Index() {
       <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
         <h1 className="text-6xl font-bold font-badscript px-4 sm:px-28">Patron</h1>
       </Banner>
-      <div className="py-5 max-w-3xl mx-auto flex flex-col gap-2 w-full">
+      <div className="py-5 max-w-3xl mx-auto flex flex-col gap-2 w-full px-2">
         <Link href="/creator">
-          <a className="bg-yellow-200 text-yellow-700 text-center px-3 py-2 text-sm">
+          <a className="bg-yellow-200 text-yellow-800 text-center px-3 py-2 text-sm drop-shadow-md rounded-md hover:scale-105 transition-transform">
             Are you a creator? Swap to the creator view here →
           </a>
         </Link>
         <TwitchPrompt />
-        <h2 className="text-3xl text-center mb-5">Campaigns</h2>
+        <h2 className="text-3xl text-center mt-3 mb-2">Campaigns</h2>
+        {!membershipData?.memberships || membershipData?.memberships.length === 0 ? (
+          <div className="text-2xl text-center">No campaigns to see here!</div>
+        ) : null}
         <div className="flex flex-col gap-5">
           {membershipData?.memberships?.length === 0 ? <div>No campaigns found!</div> : null}
           {membershipData?.memberships?.map((m) => {
@@ -66,39 +69,95 @@ export default function Index() {
             return (
               <div
                 key={m.id}
-                className={cls('flex flex-col gap-2 items-center bg-gray-200 py-5 px-2 rounded-md shadow-md', {
-                  'opacity-60 pointer-events-none': !internalCampaign,
-                })}
+                className={cls(
+                  'bg-white w-full drop-shadow-lg rounded-lg relative mt-12 border border-grey-300 p-4 flex flex-col gap-2 z-50',
+                  {
+                    'opacity-60 pointer-events-none': !internalCampaign,
+                  }
+                )}
               >
-                <div key={m.id} className="flex flex-row gap-2 items-center">
-                  <img
-                    src={m.campaign.image_small_url || m.campaign.creator.thumb_url}
-                    className="w-10 aspect-square rounded-full"
-                  />
-                  <div className="font-bold">{m.campaign.creator.full_name}</div>
-                  <div>{m.campaign.creation_name}</div>
-                  <div>
+                <img
+                  src={m.campaign.image_small_url || m.campaign.creator.thumb_url}
+                  className="rounded-full border-2 border-grey-300 bg-white w-20 h-20 absolute -top-12 left-1/2 -translate-x-1/2 drop-shadow-lg"
+                />
+                <div>
+                  <h2 className="text-bold text-2xl flex flex-row gap-1 items-center">
+                    {m.campaign.creator.full_name}
                     {internalCampaigns?.campaigns === undefined ? (
-                      <FaSpinner className="animate animate-spin" />
+                      <FaSpinner className="animate animate-spin text-sm" />
                     ) : internalCampaigns.campaigns?.has(m.campaign.id) ? (
-                      <FaCheckCircle className="text-green-600" />
+                      <FaCheckCircle className="text-green-600 text-sm" />
                     ) : (
-                      <FaTimesCircle className="text-red-600" />
+                      <FaTimesCircle className="text-red-600 text-sm" />
                     )}
-                  </div>
+                  </h2>
+                  <h3>{m.campaign.creation_name}</h3>
                 </div>
                 {internalCampaign ? (
-                  <div>
+                  <div className="flex flex-col justify-center items-center gap-2 mt-2">
                     <SoundUpload
                       campaignId={m.campaign.id}
                       patronId={membershipData.user.id}
                       existingSound={existingSound}
                       refetch={refetchInternal}
                     />
-                    {userSound?.isApproved ? 'Approved' : userSound?.isRejected ? 'Rejected' : 'Pending'}
+                    <div
+                      className={cls('flex flex-row gap-1 justify-center items-center', {
+                        'text-green-600': userSound?.isApproved,
+                        'text-red-600': userSound?.isRejected,
+                        'text-gray-600': !userSound?.isApproved && !userSound?.isRejected,
+                      })}
+                    >
+                      {userSound?.isApproved ? (
+                        <>
+                          <FaCheck /> Approved
+                        </>
+                      ) : userSound?.isRejected ? (
+                        <>
+                          <FaTimes /> Rejected
+                        </>
+                      ) : (
+                        'Pending Approval'
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </div>
+              // <div
+              //   key={m.id}
+              // className={cls('flex flex-col gap-2 items-center bg-gray-200 py-5 px-2 rounded-md shadow-md', {
+              //   'opacity-60 pointer-events-none': !internalCampaign,
+              // })}
+              // >
+              //   <div key={m.id} className="flex flex-row gap-2 items-center">
+              //     <img
+              //       src={m.campaign.image_small_url || m.campaign.creator.thumb_url}
+              //       className="w-10 aspect-square rounded-full"
+              //     />
+              //     <div className="font-bold">{m.campaign.creator.full_name}</div>
+              //     <div>{m.campaign.creation_name}</div>
+              //     <div>
+              //       {internalCampaigns?.campaigns === undefined ? (
+              //         <FaSpinner className="animate animate-spin" />
+              //       ) : internalCampaigns.campaigns?.has(m.campaign.id) ? (
+              //         <FaCheckCircle className="text-green-600" />
+              //       ) : (
+              //         <FaTimesCircle className="text-red-600" />
+              //       )}
+              //     </div>
+              //   </div>
+              //   {internalCampaign ? (
+              //     <div>
+              //       <SoundUpload
+              //         campaignId={m.campaign.id}
+              //         patronId={membershipData.user.id}
+              //         existingSound={existingSound}
+              //         refetch={refetchInternal}
+              //       />
+              //       {userSound?.isApproved ? 'Approved' : userSound?.isRejected ? 'Rejected' : 'Pending'}
+              //     </div>
+              //   ) : null}
+              // </div>
             )
           })}
         </div>

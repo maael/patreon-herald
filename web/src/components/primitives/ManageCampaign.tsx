@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { FaCheckCircle, FaSave, FaTimesCircle } from 'react-icons/fa'
+import { FaCheck, FaCheckCircle, FaSave, FaTimes, FaTimesCircle } from 'react-icons/fa'
 import { useQuery } from 'react-query'
 import SoundUpload from './SoundUpload'
 
@@ -32,7 +32,7 @@ export default function ManageCampaign({
   const rewardIds = new Set(campaign?.relationships?.rewards?.data?.map((r) => r.id))
   const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
   return (
-    <div className="flex flex-col gap-2 justify-center items-center bg-white border-gray-200 border-l border-r border-b rounded-b-lg mx-5 relative -top-2 px-5 pt-5 pb-4 drop-shadow-lg">
+    <div className="flex flex-col gap-2 justify-center items-center bg-white border-gray-200 border-l border-r border-b rounded-b-lg mx-2 md:mx-5 relative -top-2 px-5 pt-5 pb-4 drop-shadow-lg">
       <div className="flex flex-row gap-1 justify-between items-center w-full">
         <div className="flex flex-row gap-1 justify-center items-center">
           <span className="font-bold">Status:</span>
@@ -91,38 +91,42 @@ export default function ManageCampaign({
                   <span className="font-bold">Tier:</span> {pledge.tiers.map((t) => t.title).join(', ')}
                 </div>
               </div>
-              <div className="flex flex-row justify-between items-center gap-2 w-full">
-                <div>
-                  <button
-                    className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
-                    onClick={async () => {
-                      await fetch(
-                        `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                        {
-                          method: 'PATCH',
-                        }
-                      )
-                      refetch()
-                    }}
-                  >
-                    {sound?.isApproved ? 'Approved' : 'Approve'}
-                  </button>
-                </div>
-                <div>
-                  <button
-                    className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
-                    onClick={async () => {
-                      await fetch(
-                        `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                        {
-                          method: 'DELETE',
-                        }
-                      )
-                      refetch()
-                    }}
-                  >
-                    {sound?.isRejected ? 'Rejected' : 'Reject'}
-                  </button>
+              <div className="flex flex-col md:flex-row justify-between items-center gap-2 w-full">
+                <div className="flex flex-row justify-center md:justify-start items-center gap-2 w-full">
+                  <div>
+                    <button
+                      className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
+                      onClick={async () => {
+                        await fetch(
+                          `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                          {
+                            method: 'PATCH',
+                          }
+                        )
+                        refetch()
+                      }}
+                    >
+                      <FaCheck />
+                      {sound?.isApproved ? 'Approved' : 'Approve'}
+                    </button>
+                  </div>
+                  <div>
+                    <button
+                      className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
+                      onClick={async () => {
+                        await fetch(
+                          `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                          {
+                            method: 'DELETE',
+                          }
+                        )
+                        refetch()
+                      }}
+                    >
+                      <FaTimes />
+                      {sound?.isRejected ? 'Rejected' : 'Reject'}
+                    </button>
+                  </div>
                 </div>
                 <SoundUpload
                   campaignId={internalCampaign?.patreonCampaignId}

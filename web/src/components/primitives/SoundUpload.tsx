@@ -1,7 +1,7 @@
 import { useS3Upload } from 'next-s3-upload'
 import { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { FaSpinner } from 'react-icons/fa'
+import { FaExclamationCircle, FaFileUpload, FaSpinner } from 'react-icons/fa'
 import SoundPlayer from './SoundPlayer'
 
 const ONE_MB = 1000000
@@ -26,9 +26,16 @@ export default function SoundUpload({
   const { getRootProps, fileRejections, getInputProps } = useDropzone({
     maxFiles: 1,
     maxSize: ONE_MB * 5,
+    multiple: false,
     accept: {
       'audio/ogg': [],
       'audio/mp3': [],
+    },
+    onFileDialogOpen: () => {
+      setIsLoading(true)
+    },
+    onFileDialogCancel: () => {
+      setIsLoading(false)
     },
     onDrop: async (acceptedFiles) => {
       setIsLoading(true)
@@ -68,17 +75,21 @@ export default function SoundUpload({
   })
 
   return (
-    <section>
-      <div {...getRootProps({})}>
-        <input {...getInputProps()} />
-        {fileRejections.length > 0 ? (
-          <div>File too large! Only files up to 5mb are allowed</div>
-        ) : (
-          <p>Drag 'n' drop some files here, or click to select files</p>
-        )}
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-row gap-2">
+        <div {...getRootProps({})} className="flex flex-row gap-1 justify-center items-center">
+          <input {...getInputProps()} />
+          <div className="border-dashed border border-orange-400 rounded-md h-10 w-14 flex justify-center items-center text-orange-400 bg-gray-100 cursor-pointer">
+            {isLoading ? <FaSpinner className="animate animate-spin" /> : <FaFileUpload />}
+          </div>
+        </div>
+        {existingSound || savedFile ? <SoundPlayer src={existingSound || savedFile} /> : null}
       </div>
-      {existingSound || savedFile ? <SoundPlayer src={existingSound || savedFile} /> : null}
-      {isLoading ? <FaSpinner className="animate animate-spin" /> : null}
-    </section>
+      {fileRejections.length > 0 ? (
+        <div className="bg-red-500 text-white rounded-md px-2 flex flex-row gap-1 justify-center items-center text-sm">
+          <FaExclamationCircle /> Max 5mb, .mp3 or .ogg
+        </div>
+      ) : null}
+    </div>
   )
 }
