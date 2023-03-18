@@ -34,9 +34,81 @@
   },
   included: [
     { attributes: [Object], id: '9441253', type: 'campaign' },
-    { attributes: [Object], id: '88555402', type: 'user' },
-    { attributes: [Object], id: '9512023', type: 'tier' },
-    { attributes: [Object], id: '9512103', type: 'tier' }
+    {
+      "attributes": {
+        "about": null,
+        "created": "2023-02-08T16:36:05.000+00:00",
+        "first_name": "Matt",
+        "full_name": "Matt Test",
+        "hide_pledges": true,
+        "image_url": "https://c10.patreonusercontent.com/4/patreon-media/p/user/88555402/4bfe4370ac554bc99e4068c0a96b3b6a/eyJ3IjoyMDB9/1.png?token-time=2145916800&token-hash=G_UxtwH_5S9bYwkabnIyvl2cmwKKKJqy309svWeCqdg%3D",
+        "is_creator": false,
+        "last_name": "Test",
+        "like_count": 0,
+        "social_connections": {
+          "deviantart": null,
+          "discord": null,
+          "facebook": null,
+          "google": null,
+          "instagram": null,
+          "reddit": null,
+          "spotify": null,
+          "twitch": null,
+          "twitter": null,
+          "vimeo": null,
+          "youtube": null
+        },
+        "thumb_url": "https://c10.patreonusercontent.com/4/patreon-media/p/user/88555402/4bfe4370ac554bc99e4068c0a96b3b6a/eyJ3IjoyMDB9/1.png?token-time=2145916800&token-hash=G_UxtwH_5S9bYwkabnIyvl2cmwKKKJqy309svWeCqdg%3D",
+        "url": "https://www.patreon.com/user?u=88555402",
+        "vanity": null
+      },
+      "id": "88555402",
+      "type": "user"
+    },
+    {
+      "attributes": {
+        "amount_cents": 100,
+        "created_at": "2023-02-08T16:57:40.357+00:00",
+        "description": "",
+        "discord_role_ids": null,
+        "edited_at": "2023-02-08T16:57:40.357+00:00",
+        "image_url": null,
+        "patron_count": 1,
+        "post_count": 0,
+        "published": true,
+        "published_at": "2023-02-08T16:57:40.357+00:00",
+        "remaining": null,
+        "requires_shipping": false,
+        "title": "Bib",
+        "unpublished_at": null,
+        "url": "/join/maael/checkout?rid=9512103",
+        "user_limit": null
+      },
+      "id": "9512103",
+      "type": "tier"
+    },
+    {
+      "attributes": {
+        "amount_cents": 100,
+        "created_at": "2023-02-08T16:33:53.335+00:00",
+        "description": "",
+        "discord_role_ids": null,
+        "edited_at": "2023-02-08T16:33:53.335+00:00",
+        "image_url": null,
+        "patron_count": 0,
+        "post_count": 0,
+        "published": true,
+        "published_at": "2023-02-08T16:33:53.335+00:00",
+        "remaining": null,
+        "requires_shipping": false,
+        "title": "Not Even a Bit",
+        "unpublished_at": null,
+        "url": "/join/maael/checkout?rid=9512023",
+        "user_limit": null
+      },
+      "id": "9512023",
+      "type": "tier"
+    }
   ],
   links: {
     self: 'https://www.patreon.com/api/oauth2/v2/members/6e8d5b84-dfc9-457b-bb88-89df59777251'

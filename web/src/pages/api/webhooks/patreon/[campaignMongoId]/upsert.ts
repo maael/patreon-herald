@@ -1,7 +1,7 @@
 import { NextApiHandler } from 'next'
 
 const handler: NextApiHandler = async (req, res) => {
-  console.info('[webhook:upsert]', req.query.campaignMongoId, JSON.stringify(req.body, undefined, 2))
+  console.info('[webhook:upsert]', req.query.campaignMongoId, JSON.stringify(req.body.data.relationships, undefined, 2))
   /**
    * TODO: Update the campaign up removing/disabling this user
    */
