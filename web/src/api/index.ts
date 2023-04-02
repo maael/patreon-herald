@@ -166,12 +166,12 @@ export const campaigns = {
    * Upsert patron entitlement details for campaign
    */
   upsertPatronCampaignEntitlement: async (
-    patreonCampaignId: string,
+    campaignId: string,
     patronId: string,
     details: Campaign['entitlements'][0]
   ) => {
     await dbConnect()
-    return CampaignModel.updateOne({ patreonCampaignId }, { $set: { [`entitlements.${patronId}`]: details } })
+    return CampaignModel.updateOne({ _id: campaignId }, { $set: { [`entitlements.${patronId}`]: details } })
   },
   /**
    * Upsert multiple patron entitlement details for campaign
@@ -183,9 +183,9 @@ export const campaigns = {
   /**
    * Remove patron entitlement details for campaign
    */
-  removePatronCampaignEntitlement: async (patreonCampaignId: string, patronId: string) => {
+  removePatronCampaignEntitlement: async (campaignId: string, patronId: string) => {
     await dbConnect()
-    return CampaignModel.updateOne({ patreonCampaignId }, { $unset: { [`entitlements.${patronId}`]: '' } })
+    return CampaignModel.updateOne({ _id: campaignId }, { $unset: { [`entitlements.${patronId}`]: '' } })
   },
   /**
    * Update campaign webhook IDs
