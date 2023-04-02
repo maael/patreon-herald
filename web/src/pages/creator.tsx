@@ -4,12 +4,13 @@ import { signOut, useSession } from 'next-auth/react'
 import { SiObsstudio } from 'react-icons/si'
 import { useQuery } from 'react-query'
 import { useRouter } from 'next/router'
+import toast from 'react-hot-toast'
 import ManageCampaign from '~/components/primitives/ManageCampaign'
 import { TwitchPrompt } from '~/components/primitives/Twitch'
 import Link from 'next/link'
 import Banner from '~/components/primitives/Banner'
 import useRestrictedRoute from '~/components/hooks/useRestrictRoute'
-import { FaCheck, FaChevronCircleDown, FaChevronCircleUp, FaCopy, FaPlus, FaTimes } from 'react-icons/fa'
+import { FaCheck, FaChevronCircleDown, FaChevronCircleUp, FaCopy, FaPlus, FaRedoAlt, FaTimes } from 'react-icons/fa'
 import useCopyToClipboard from '~/components/hooks/useCopyToClipboard'
 
 export default function CreatorManage() {
@@ -109,6 +110,7 @@ function Campaign({
   const obsUrl = `https://patreon-herald.mael.tech/obs/alert/${twitchUserName}/${campaign.id}`
   const [copied, copy] = useCopyToClipboard(obsUrl)
   const isActive = internalCampaignData?.data?.has(campaign.id)
+  const internalCampaign = internalCampaignData?.data?.get(campaign.id)
   return (
     <>
       <div className="bg-white w-full drop-shadow-lg rounded-lg relative mt-12 border border-grey-300 p-4 flex flex-col gap-2 z-50">
@@ -117,10 +119,39 @@ function Campaign({
           className="rounded-full border-2 border-grey-300 bg-white w-20 h-20 absolute -top-12 left-1/2 -translate-x-1/2 drop-shadow-lg"
         />
         {isActive ? (
-          <button className="bg-red-600 absolute top-4 right-4 text-sm px-3 py-1 group h-8">
-            <FaTimes />
-            <span className="hidden group-hover:block">Disable</span>
-          </button>
+          <div className="absolute top-4 right-4 text-sm flex flex-row gap-2 flex-nowrap justify-center items-center">
+            <button
+              className="bg-yellow-400 px-3 py-1 group h-8 hover:bg-yellow-500 transition-all"
+              onClick={async () => {
+                try {
+                  const result = await fetch(`/api/internal/webhooks/${internalCampaign?._id}`, {
+                    method: 'PUT',
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                  })
+                  if (!result.ok) throw new Error('Unexpected error')
+                  toast.success('Refreshed webhooks')
+                } catch (e) {
+                  toast.error('Error, please try again')
+                }
+              }}
+            >
+              <FaRedoAlt />
+              <span className="hidden group-hover:block">Refresh Webhooks</span>
+            </button>
+            <button
+              className="bg-red-600 px-3 py-1 group h-8 hover:bg-red-700 transition-all"
+              onClick={() => {
+                try {
+                  toast.success('Disabled campaign')
+                } catch (e) {
+                  toast.error('Error, please try again')
+                }
+              }}
+            >
+              <FaTimes />
+              <span className="hidden group-hover:block">Disable</span>
+            </button>
+          </div>
         ) : null}
         <div>
           <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
@@ -169,6 +200,7 @@ function Campaign({
                 })
                 await res.json()
                 await refetchInternalCampaignData()
+                toast.success('Enabled campaign')
               }}
               className="bg-green-600 mx-auto text-xl"
             >

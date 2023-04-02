@@ -5,6 +5,16 @@ type WithDoc<T> = T
 export interface Campaign {
   patreonCampaignId: string
   ownerPatreonId: string
+  webhooks: {
+    upsert: {
+      id: string
+      secret: string
+    }
+    delete: {
+      id: string
+      secret: string
+    }
+  }
   entitledCriteria: {
     criteriaType: string
     amountCents: number
@@ -36,6 +46,16 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
   {
     patreonCampaignId: { required: true, unique: true, type: String },
     ownerPatreonId: { required: true, type: String },
+    webhooks: {
+      upsert: {
+        id: String,
+        secret: String,
+      },
+      delete: {
+        id: String,
+        secret: String,
+      },
+    },
     entitledCriteria: {
       type: {
         criteriaType: {

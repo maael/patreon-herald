@@ -38,6 +38,14 @@ export const connection = {
 
 export const campaigns = {
   /**
+   * Get campaign patreon webhook IDs for refreshing
+   */
+  getCampaignWebhooksById: async (id: string) => {
+    await dbConnect()
+    const result = await CampaignModel.findOne({ _id: id }, { _id: 1, patreonCampaignId: 1, webhooks: 1 }).lean()
+    return result
+  },
+  /**
    * Show creator their campaigns - optionally include sounds field, for use by tray app
    */
   getCampaignsForUser: async (id: string) => {
@@ -79,8 +87,7 @@ export const campaigns = {
     })
     try {
       if (accessToken) {
-        const webhookSecrets = await patreon.makeWebhooks(accessToken, created._id.toString(), patreonCampaignData.id)
-        await CampaignModel.updateOne({ _id: created._id }, { webhookSecrets })
+        await patreon.makeWebhooks(accessToken, created._id.toString(), patreonCampaignData.id)
       }
     } catch (e) {
       console.warn('[createInitial:webhook:error]', patreonId, e)
@@ -180,9 +187,64 @@ export const campaigns = {
     await dbConnect()
     return CampaignModel.updateOne({ patreonCampaignId }, { $unset: { [`entitlements.${patronId}`]: '' } })
   },
+  /**
+   * Update campaign webhook IDs
+   */
+  updateCampaignWebhooks: async (
+    campaignId: string,
+    webhooks: { upsert: { id: string; secret: string }; delete: { id: string; secret: string } }
+  ) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ _id: campaignId }, { $set: { webhooks } })
+  },
 }
 
 export const patreon = {
+  refreshWebhooks: async (
+    accessToken: string,
+    campaignId: string,
+    webhooks: { upsert: { id: string; secret: string }; delete: { id: string; secret: string } }
+  ) => {
+    console.info('[webhooks:refresh]', campaignId, webhooks)
+    await Promise.all([
+      fetch(`https://www.patreon.com/api/oauth2/v2/webhooks/${webhooks.upsert.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: {
+            id: webhooks.upsert.id,
+            type: 'webhook',
+            attributes: {
+              triggers: ['members:pledge:create', 'members:pledge:update'],
+              uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${campaignId}/upsert`,
+              paused: 'false', // <- do this if you’re attempting to send missed events, see NOTE in Example Webhook Payload
+            },
+          },
+        }),
+      }),
+      fetch(`https://www.patreon.com/api/oauth2/v2/webhooks/${webhooks.delete.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: {
+            id: webhooks.delete.id,
+            type: 'webhook',
+            attributes: {
+              triggers: ['members:pledge:delete'],
+              uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${campaignId}/delete`,
+              paused: 'false', // <- do this if you’re attempting to send missed events, see NOTE in Example Webhook Payload
+            },
+          },
+        }),
+      }),
+    ])
+  },
   makeWebhooks: async (accessToken: string, createdCampaignId: string, campaignId: string) => {
     const data = await Promise.all([
       fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {
@@ -229,8 +291,12 @@ export const patreon = {
       }).then((r) => r.json()),
     ])
     console.info('[create:webhooks]', data)
-    const webhookSecrets = { upsert: data[0].data?.attributes.secret, delete: data[1].data?.attributes.secret }
-    return webhookSecrets
+    const webhookData = {
+      upsert: { secret: data[0].data?.attributes.secret, id: data[0].data?.id },
+      delete: { secret: data[1].data?.attributes.secret, id: data[1].data?.id },
+    }
+    await campaigns.updateCampaignWebhooks(createdCampaignId, webhookData)
+    return webhookData
   },
   getWebhooks: async (accessToken: string) => {
     return fetch('https://www.patreon.com/api/oauth2/v2/webhooks', {

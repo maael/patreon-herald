@@ -43,7 +43,7 @@ const handler: NextApiHandler = async (req, res) => {
       type,
       data: await patreon.getInitialMembers(req.query.accessToken.toString(), req.query.campaignId.toString()),
     })
-  } else {
+  } else if (type === 'get') {
     const data = await patreon.getWebhooks(req.query.accessToken.toString())
     res.json({ type: 'get', data })
   }

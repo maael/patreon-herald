@@ -1,7 +1,7 @@
 import { NextApiHandler } from 'next'
 import { unstable_getServerSession } from 'next-auth'
 import { authOptions } from '~/pages/api/auth/[...nextauth]'
-import { campaigns } from '~/api'
+import { campaigns, patreon } from '~/api'
 
 const internalApi: { [k: string]: NextApiHandler } = {
   /**
@@ -92,6 +92,28 @@ const internalApi: { [k: string]: NextApiHandler } = {
     const result = await campaigns.updateCampaignSettings(pathParts[1], req.body)
     res.json(result)
   },
+  /**
+   * PUT /internal/webhooks/:campaignId
+   */
+  refreshWebhooks: async (req, res) => {
+    try {
+      const pathParts = req.query.path || []
+      const campaignId = pathParts[1]
+      const patreonToken = `${(req.headers.authorization?.split(' ') || [])[1]}`
+      const result = await campaigns.getCampaignWebhooksById(campaignId)
+      console.info('[webhooks:refresh]', campaignId, result)
+      if (result?.webhooks) {
+        await patreon.refreshWebhooks(patreonToken, campaignId, result.webhooks)
+      } else if (result) {
+        const webhookData = await patreon.makeWebhooks(patreonToken, campaignId, result.patreonCampaignId)
+        console.info('[webhooks:made]', { webhookData })
+      }
+      res.json(result)
+    } catch (e) {
+      console.error('[webhooks:refresh]', e)
+      res.status(500).json({ error: e })
+    }
+  },
 }
 
 const handler: NextApiHandler = async (req, res) => {
@@ -116,6 +138,8 @@ const handler: NextApiHandler = async (req, res) => {
       await internalApi.getUserSounds(req, res)
     } else if (pathParts[0] === 'alert' && method === 'GET') {
       await internalApi.getCampaignForAlert(req, res)
+    } else if (pathParts[0] === 'webhooks' && method === 'PUT') {
+      await internalApi.refreshWebhooks(req, res)
     } else {
       res.json({ ok: 1, error: 'Missing endpoint', pathParts })
     }
