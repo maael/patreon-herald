@@ -126,7 +126,7 @@ export default function ManageCampaign({
                 <img src={pledge.user.thumb_url} className="w-8 aspect-square rounded-full" />
                 <div className="flex-1 font-bold">{pledge.user.full_name}</div>
                 <div>
-                  <span className="font-bold">Tier:</span> {pledge.tiers.map((t) => t.title).join(', ')}
+                  <span className="font-bold">Entitled Tiers:</span> {pledge.tiers.map((t) => t.title).join(', ')}
                 </div>
               </div>
               <div className="flex flex-col md:flex-row justify-between items-center gap-2 w-full">
