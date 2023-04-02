@@ -1,6 +1,6 @@
 import { NextApiHandler, NextApiRequest } from 'next'
 import fetch from 'isomorphic-fetch'
-import { patreon } from '~/api'
+import { campaigns, patreon } from '~/api'
 
 function getPath(pathParts) {
   if (pathParts[0] === 'campaigns') {
@@ -58,7 +58,28 @@ const handler: NextApiHandler = async (req, res) => {
   try {
     const pathParts = req.query.path || []
     if (pathParts[0] === 'members') {
-      res.json(await patreon.getInitialMembers(`${(req.headers.authorization?.split(' ') || [])[1]}`, pathParts[1]))
+      const campaignId = pathParts[1]
+      const patreons = await patreon.getInitialMembers(
+        `${(req.headers.authorization?.split(' ') || [])[1]}`,
+        campaignId
+      )
+
+      const mappedEntitlements = patreons.reduce(
+        (acc, p) => ({
+          ...[acc],
+          [`entitlements.${p.user.id}.currentlyEntitledAmountsCents`]: Math.max(...p.tiers.map((t) => t.amount_cents)),
+          [`entitlements.${p.user.id}.currentlyEntitledTiers`]: p.tiers.map((t) => t.id),
+        }),
+        {}
+      )
+
+      try {
+        await campaigns.upsertPatronCampaignEntitlements(campaignId, mappedEntitlements)
+      } catch (e) {
+        console.info('failed to update entitlements', e)
+      }
+
+      res.json(patreons)
     } else {
       const patreonPath = getPath(pathParts)
       if (!patreonPath) throw new Error('No matching path')

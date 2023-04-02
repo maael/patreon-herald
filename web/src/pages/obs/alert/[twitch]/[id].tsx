@@ -14,26 +14,33 @@ export default function Alert() {
       fetch(`/api/internal/alert/${id}`)
         .then((r) => r.json())
         .then((data) => {
+          const criteriaCents = data?.campaign?.entitledCriteria?.amountCents
           return new Map<string, any>(
             data.connections
               .map((c) => {
                 const sound = (data?.campaign?.sounds || {})[c.patreon.id] || {}
                 if (!sound.isApproved) return
+                const entitlement = (data?.campaign?.entitlements || {})[c.patreon.id] || {}
+                if ((entitlement.currentlyEntitledAmountsCents || 0) < criteriaCents) return
                 return [c.twitch.id, { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}` }]
               })
               .filter(Boolean)
           )
         }),
   })
+  console.info('[loaded]', { count: data?.size })
   useEffect(() => {
+    console.info('[connect]', { twitch })
     const client = new tmi.Client({ channels: [twitch] })
 
     client.connect()
 
     client.on('message', (_channel, tags) => {
-      const sound = data?.get(tags['user-id'])?.sound
-      if (ref.current && sound && !seenList.current.has(tags['user-id'])) {
-        seenList.current.add(tags['user-id'])
+      const userId = tags['user-id']
+      const sound = data?.get(userId)?.sound
+      if (ref.current && sound && !seenList.current.has(userId)) {
+        console.info('[playing]', { userId, displayName: tags['display-name'], sound })
+        seenList.current.add(userId)
         ref.current.src = sound
         ref.current.pause()
         ref.current.currentTime = 0

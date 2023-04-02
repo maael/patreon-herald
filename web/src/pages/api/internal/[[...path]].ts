@@ -84,6 +84,14 @@ const internalApi: { [k: string]: NextApiHandler } = {
     const result = await campaigns.getCampaignForAlert(pathParts[1])
     res.json(result)
   },
+  /**
+   * PATCH /internal/campaigns/:campaignId
+   */
+  updateCampaign: async (req, res) => {
+    const pathParts = req.query.path || []
+    const result = await campaigns.updateCampaignSettings(pathParts[1], req.body)
+    res.json(result)
+  },
 }
 
 const handler: NextApiHandler = async (req, res) => {
@@ -98,6 +106,8 @@ const handler: NextApiHandler = async (req, res) => {
       await internalApi.approveUserSound(req, res)
     } else if (pathParts[0] === 'campaign' && pathParts.at(-1) === 'approve' && method === 'DELETE') {
       await internalApi.rejectUserSound(req, res)
+    } else if (pathParts[0] === 'campaign' && method === 'PATCH') {
+      await internalApi.updateCampaign(req, res)
     } else if (pathParts[0] === 'campaign' && method === 'POST') {
       await internalApi.addSoundToUser(req, res)
     } else if (pathParts[0] === 'campaign' && method === 'DELETE') {

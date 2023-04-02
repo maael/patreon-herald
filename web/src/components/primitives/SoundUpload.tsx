@@ -2,6 +2,7 @@ import { useS3Upload } from 'next-s3-upload'
 import { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { FaExclamationCircle, FaFileUpload, FaSpinner } from 'react-icons/fa'
+import toast from 'react-hot-toast'
 import SoundPlayer from './SoundPlayer'
 
 const ONE_MB = 1000000
@@ -66,8 +67,10 @@ export default function SoundUpload({
         refetch()
         setSavedFile(`https://files.mael-cdn.com${imagePath}`)
         resetFiles()
+        toast.success('Uploaded')
       } catch (e) {
         console.error('[image:error]', e)
+        toast.error('Error, please try again')
       } finally {
         setIsLoading(false)
       }

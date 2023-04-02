@@ -10,12 +10,16 @@ export interface Campaign {
     amountCents: number
     tierId: string
   }
-  sounds: {
+  entitlements: {
     [k: string]: {
-      sound: string
       currentlyEntitledAmountsCents: number
       currentlyEntitledTiers: string[]
       lifetimeSupportCents: number
+    }
+  }
+  sounds: {
+    [k: string]: {
+      sound: string
       isApproved: boolean
       isRejected: boolean
     }
@@ -30,7 +34,7 @@ interface ItemModel extends Model<WithDoc<Campaign>> {}
 
 const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
   {
-    patreonCampaignId: { required: true, type: String },
+    patreonCampaignId: { required: true, unique: true, type: String },
     ownerPatreonId: { required: true, type: String },
     entitledCriteria: {
       type: {
@@ -42,14 +46,20 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
         tierId: String,
       },
     },
+    entitlements: {
+      default: {},
+      type: Map,
+      of: {
+        currentlyEntitledAmountsCents: { default: 0, type: Number },
+        currentlyEntitledTiers: { default: [], type: Array, of: String },
+        lifetimeSupportCents: { default: 0, type: Number },
+      },
+    },
     sounds: {
       default: {},
       type: Map,
       of: {
         sound: String,
-        currentlyEntitledAmountsCents: { default: 0, type: Number },
-        currentlyEntitledTiers: { default: [], type: Array, of: String },
-        lifetimeSupportCents: { default: 0, type: Number },
         isApproved: { type: Boolean, default: false },
         isRejected: { type: Boolean, default: false },
       },

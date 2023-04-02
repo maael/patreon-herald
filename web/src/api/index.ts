@@ -56,7 +56,10 @@ export const campaigns = {
   },
   getCampaignForAlert: async (patreonCampaignId: string) => {
     await dbConnect()
-    const campaign = await CampaignModel.findOne({ patreonCampaignId }, { patreonCampaignId: 1, sounds: 1 }).lean()
+    const campaign = await CampaignModel.findOne(
+      { patreonCampaignId },
+      { patreonCampaignId: 1, sounds: 1, entitledCriteria: 1, entitlements: 1 }
+    ).lean()
     const connections = await ConnectionModel.find(
       { 'patreon.id': { $in: Object.keys(campaign?.sounds || {}) } },
       { patreon: 1, twitch: 1 }
@@ -83,6 +86,13 @@ export const campaigns = {
       console.warn('[createInitial:webhook:error]', patreonId, e)
     }
     return created
+  },
+  /**
+   * Update campaign settings
+   */
+  updateCampaignSettings: async (campaignId: string, settings: Pick<Campaign, 'entitledCriteria'>) => {
+    console.info({ campaignId, settings })
+    return CampaignModel.updateOne({ _id: campaignId }, { entitledCriteria: settings.entitledCriteria })
   },
   /**
    * When a patreon uploads/adds their sound for approval
@@ -145,6 +155,31 @@ export const campaigns = {
     await dbConnect()
     return CampaignModel.find({ patreonCampaignId: { $in: patreonCampaignIds } }, { [`sounds.${patronId}`]: 1 })
   },
+  /**
+   * Upsert patron entitlement details for campaign
+   */
+  upsertPatronCampaignEntitlement: async (
+    patreonCampaignId: string,
+    patronId: string,
+    details: Campaign['entitlements'][0]
+  ) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ patreonCampaignId }, { $set: { [`entitlements.${patronId}`]: details } })
+  },
+  /**
+   * Upsert multiple patron entitlement details for campaign
+   */
+  upsertPatronCampaignEntitlements: async (patreonCampaignId: string, entitlements: Campaign['entitlements']) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ patreonCampaignId }, { $set: entitlements })
+  },
+  /**
+   * Remove patron entitlement details for campaign
+   */
+  removePatronCampaignEntitlement: async (patreonCampaignId: string, patronId: string) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ patreonCampaignId }, { $unset: { [`entitlements.${patronId}`]: '' } })
+  },
 }
 
 export const patreon = {
@@ -160,7 +195,7 @@ export const patreon = {
           data: {
             type: 'webhook',
             attributes: {
-              triggers: ['members:create', 'members:update'],
+              triggers: ['members:create', 'members:update', 'members:pledge:create', 'members:pledge:update'],
               uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${createdCampaignId}/upsert`,
             },
             relationships: {
@@ -181,7 +216,7 @@ export const patreon = {
           data: {
             type: 'webhook',
             attributes: {
-              triggers: ['members:delete'],
+              triggers: ['members:delete', 'members:pledge:delete'],
               uri: `https://patreon-herald.mael.tech/api/webhooks/patreon/${createdCampaignId}/delete`,
             },
             relationships: {
@@ -208,11 +243,14 @@ export const patreon = {
   },
   getInitialMembers: async (accessToken: string, campaignId: string) => {
     let cursor = null
-    let data = []
+    let data: {
+      tiers: { amount_cents: number; title: string; id: string }[]
+      user: { full_name: string; thumb_url: string; id: string }
+    }[] = []
     try {
       do {
         const page = await patreon.getMembersPage(accessToken, campaignId, cursor)
-        console.info(accessToken, JSON.stringify(page, undefined, 2))
+        console.info({ accessToken, cursor })
         const linkedUsers = new Map<string, any>(
           page.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
         )

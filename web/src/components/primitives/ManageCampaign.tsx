@@ -1,6 +1,8 @@
 import classNames from 'classnames'
-import { FaCheck, FaCheckCircle, FaSave, FaTimes, FaTimesCircle } from 'react-icons/fa'
+import { useState } from 'react'
+import { FaCheck, FaCheckCircle, FaSave, FaSpinner, FaTimes, FaTimesCircle } from 'react-icons/fa'
 import { useQuery } from 'react-query'
+import { toast } from 'react-hot-toast'
 import SoundUpload from './SoundUpload'
 
 export default function ManageCampaign({
@@ -29,7 +31,12 @@ export default function ManageCampaign({
       }
     },
   })
+  const [isSaving, setIsSaving] = useState(false)
   const rewardIds = new Set(campaign?.relationships?.rewards?.data?.map((r) => r.id))
+  const rewards = campaignData?.included?.filter(
+    (i) => i.type === 'reward' && rewardIds.has(i.id) && i.attributes.published
+  )
+
   const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
   return (
     <div className="flex flex-col gap-2 justify-center items-center bg-white border-gray-200 border-l border-r border-b rounded-b-lg mx-2 md:mx-5 relative -top-2 px-5 pt-5 pb-4 drop-shadow-lg">
@@ -42,12 +49,42 @@ export default function ManageCampaign({
             <FaTimesCircle className="text-red-600" />
           )}
         </div>
-        <div>
-          <span className="font-bold">Starting Tier:</span>
-          <select>
-            {campaignData?.included
-              ?.filter((i) => i.type === 'reward' && rewardIds.has(i.id) && i.attributes.published)
-              .map((reward) => {
+        <form
+          className="flex flex-row gap-2 justify-between items-center"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            try {
+              setIsSaving(true)
+              const selected = e.currentTarget.querySelector('select')?.value
+              const selectedReward = rewards.find((r) => r.id === selected)
+              console.info({ selectedReward })
+              const payload = {
+                entitledCriteria: {
+                  criteriaType: 'currently_entitled',
+                  amountCents: selectedReward.attributes.amount_cents,
+                  tierId: selected,
+                },
+              }
+              await fetch(`/api/internal/campaign/${internalCampaign._id}`, {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                method: 'PATCH',
+                body: JSON.stringify(payload),
+              })
+              toast.success('Saved')
+            } catch (e) {
+              toast.error('Error, please try again')
+              console.error('[error]', e)
+            } finally {
+              setIsSaving(false)
+            }
+          }}
+        >
+          <div>
+            <span className="font-bold">Starting Tier:</span>
+            <select defaultValue={internalCampaign?.entitledCriteria?.tierId}>
+              {rewards.map((reward) => {
                 return (
                   <option key={reward.id} value={reward.id}>
                     {[
@@ -62,12 +99,13 @@ export default function ManageCampaign({
                   </option>
                 )
               })}
-          </select>
-        </div>
-        <button className="gap-2">
-          <FaSave />
-          Save
-        </button>
+            </select>
+          </div>
+          <button type="submit" className="gap-2">
+            {isSaving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+            Save
+          </button>
+        </form>
       </div>
       <h2 className="font-bold">
         {membersData?.length || 0} Pledge{membersData?.length === 1 ? '' : 's'}
@@ -97,13 +135,19 @@ export default function ManageCampaign({
                     <button
                       className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
                       onClick={async () => {
-                        await fetch(
-                          `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                          {
-                            method: 'PATCH',
-                          }
-                        )
-                        refetch()
+                        try {
+                          await fetch(
+                            `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                            {
+                              method: 'PATCH',
+                            }
+                          )
+                          toast.success('Approved')
+                          refetch()
+                        } catch (e) {
+                          console.error('[approve:error]', e)
+                          toast.error('Error, please try again')
+                        }
                       }}
                     >
                       <FaCheck />
@@ -114,13 +158,19 @@ export default function ManageCampaign({
                     <button
                       className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
                       onClick={async () => {
-                        await fetch(
-                          `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                          {
-                            method: 'DELETE',
-                          }
-                        )
-                        refetch()
+                        try {
+                          await fetch(
+                            `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                            {
+                              method: 'DELETE',
+                            }
+                          )
+                          refetch()
+                          toast.success('Rejected')
+                        } catch (e) {
+                          console.error('[reject:error]', e)
+                          toast.error('Error, please try again')
+                        }
                       }}
                     >
                       <FaTimes />

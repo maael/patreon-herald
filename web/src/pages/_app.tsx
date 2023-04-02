@@ -4,6 +4,7 @@ import { AppProps } from 'next/app'
 import { DefaultSeo } from 'next-seo'
 import { SessionProvider } from 'next-auth/react'
 import { QueryClient, QueryClientProvider } from 'react-query'
+import { Toaster } from 'react-hot-toast'
 import useFathom from '~/components/hooks/useFathom'
 import SEO from '~/../next-seo.config'
 import EmojiFavicon from '~/components/primitives/EmojiFavicon'
@@ -27,6 +28,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <DefaultSeo {...SEO} />
         <Header />
         <Component {...pageProps} />
+        <Toaster position="bottom-center" />
         <EmojiFavicon emoji="🎺" />
       </SessionProvider>
     </QueryClientProvider>

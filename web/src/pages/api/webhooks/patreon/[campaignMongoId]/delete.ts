@@ -1,10 +1,13 @@
 import { NextApiHandler } from 'next'
+import { campaigns } from '~/api'
+import { Body } from '~/types'
 
 const handler: NextApiHandler = async (req, res) => {
-  console.info('[webhook:delete]', req.query.campaignMongoId, JSON.stringify(req.body.data, undefined, 2))
-  /**
-   * TODO: Update the campaign up removing/disabling this user
-   */
+  const body: Body = req.body
+  const campaignId = req.query.campaignMongoId.toString()
+  const patronId = body.data.relationships.user.data.id
+  console.info('[webhook:delete]', campaignId, patronId)
+  await campaigns.removePatronCampaignEntitlement(campaignId, patronId)
   res.json({ ok: 1 })
 }
 
