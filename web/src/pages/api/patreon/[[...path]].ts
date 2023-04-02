@@ -69,6 +69,7 @@ const handler: NextApiHandler = async (req, res) => {
           ...[acc],
           [`entitlements.${p.user.id}.currentlyEntitledAmountsCents`]: Math.max(...p.tiers.map((t) => t.amount_cents)),
           [`entitlements.${p.user.id}.currentlyEntitledTiers`]: p.tiers.map((t) => t.id),
+          [`entitlements.${p.user.id}.lastUpdated`]: new Date().toISOString(),
         }),
         {}
       )

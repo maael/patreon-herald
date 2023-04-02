@@ -25,6 +25,7 @@ export interface Campaign {
       currentlyEntitledAmountsCents: number
       currentlyEntitledTiers: string[]
       lifetimeSupportCents: number
+      lastUpdated: string
     }
   }
   sounds: {
@@ -73,6 +74,7 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
         currentlyEntitledAmountsCents: { default: 0, type: Number },
         currentlyEntitledTiers: { default: [], type: Array, of: String },
         lifetimeSupportCents: { default: 0, type: Number },
+        lastUpdated: String,
       },
     },
     sounds: {

@@ -19,6 +19,7 @@ const handler: NextApiHandler = async (req, res) => {
     currentlyEntitledAmountsCents,
     currentlyEntitledTiers,
     lifetimeSupportCents: 0,
+    lastUpdated: new Date().toISOString(),
   }
   console.info('[webhook:upsert]', campaignId, patronId, entitlementInfo)
   await campaigns.upsertPatronCampaignEntitlement(campaignId, patronId, entitlementInfo)
