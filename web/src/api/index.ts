@@ -2,6 +2,7 @@ import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import dbConnect from '~/db/mongo'
 import ConnectionModel, { Connection } from '~/db/connectionModel'
 import CampaignModel, { Campaign } from '~/db/campaignModel'
+import { EmailType, sendEmail } from './email'
 
 const s3Client = new S3Client({
   region: process.env.S3_UPLOAD_REGION,
@@ -14,9 +15,8 @@ export const connection = {
    */
   createInitial: async (patreon: Connection['patreon']) => {
     await dbConnect()
-    const existing = await ConnectionModel.findOne({ 'patreon.id': patreon.id })
-    if (existing) return existing
-    return ConnectionModel.create({ patreon })
+    const result = await ConnectionModel.findOneAndUpdate({ 'patreon.id': patreon.id }, { patreon }, { upsert: true })
+    return result
   },
   /**
    * Associates twitch account to patreon account on twitch auth callback
@@ -111,8 +111,9 @@ export const campaigns = {
     autoApprove?: boolean
   ) => {
     await dbConnect()
+    let existing: any
     try {
-      const existing = await CampaignModel.findOne({ patreonCampaignId }, { [`sounds.${patronId}`]: 1 })
+      existing = await CampaignModel.findOne({ patreonCampaignId }, { ownerPatreonId: 1, [`sounds.${patronId}`]: 1 })
       if (existing && (existing.sounds as any).get(patronId)) {
         const existingSound = (existing.sounds as any).get(patronId)
         const result = await s3Client.send(
@@ -123,10 +124,14 @@ export const campaigns = {
     } catch (e) {
       console.warn('[addSound:cleanup]', e)
     }
-    return CampaignModel.updateOne(
+    const result = await CampaignModel.updateOne(
       { patreonCampaignId },
       { $set: { [`sounds.${patronId}`]: { ...sound, isApproved: !!autoApprove, isRejected: false } } }
     )
+    if (!autoApprove) {
+      await sendEmail(EmailType.NewSound, existing?.ownerPatreonId, { campaignId: patreonCampaignId })
+    }
+    return result
   },
   /**
    * When patreon tells us a pledge is removed

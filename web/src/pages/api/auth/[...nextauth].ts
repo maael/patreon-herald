@@ -10,7 +10,9 @@ export const authOptions: AuthOptions = {
       clientId: process.env.PATREON_ID || '',
       clientSecret: process.env.PATREON_SECRET || '',
       userinfo: {
-        url: `https://www.patreon.com/api/oauth2/v2/identity?${encodeURI('fields[user]=full_name,thumb_url')}`,
+        url: `https://www.patreon.com/api/oauth2/v2/identity?${encodeURI(
+          'fields[user]=email,full_name,image_url,thumb_url'
+        )}`,
       },
       profile(profile) {
         return {
@@ -22,7 +24,7 @@ export const authOptions: AuthOptions = {
       },
       authorization: {
         params: {
-          scope: 'identity campaigns campaigns.members identity.memberships w:campaigns.webhook',
+          scope: 'identity identity[email] campaigns campaigns.members identity.memberships w:campaigns.webhook',
         },
       },
     }),
@@ -60,7 +62,8 @@ export const authOptions: AuthOptions = {
       const tidyProfile = {
         id: profileData.id,
         username: profileData.attributes.full_name,
-        image: profileData.attributes.image_url,
+        image: profileData.attributes.image_url || profileData.attributes.thumb_url,
+        email: profileData.attributes.email,
       }
       await connection.createInitial(tidyProfile)
       return true

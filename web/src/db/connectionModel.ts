@@ -7,6 +7,7 @@ export interface Connection {
     id: string
     username: string
     image: string
+    email?: string
   }
   twitch:
     | {
@@ -34,6 +35,7 @@ const itemSchema = new Schema<WithDoc<Connection>, ItemModel>(
         },
         username: String,
         image: String,
+        email: { required: false, type: String },
       },
     },
     twitch: {
