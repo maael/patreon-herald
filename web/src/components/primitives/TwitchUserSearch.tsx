@@ -4,6 +4,7 @@ import { GroupBase, OptionProps, SingleValueProps, StylesConfig } from 'react-se
 import AsyncSelect from 'react-select/async'
 import cls from 'classnames'
 import { toast } from 'react-hot-toast'
+import { FaTwitch } from 'react-icons/fa'
 
 function TwitchUserOptionInner({
   data,
@@ -28,6 +29,7 @@ function TwitchUserOptionInner({
       )}
       {...innerProps}
     >
+      {isSelected === undefined ? <FaTwitch className="text-purple-600 text-lg" /> : null}
       <img
         className="rounded-full w-7 aspect-square drop-shadow-lg border-2 border-purple-600"
         src={image || undefined}
