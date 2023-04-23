@@ -4,6 +4,8 @@ import { FaCheck, FaCheckCircle, FaSave, FaSpinner, FaTimes, FaTimesCircle } fro
 import { useQuery } from 'react-query'
 import { toast } from 'react-hot-toast'
 import SoundUpload from './SoundUpload'
+import { PatreonUserLabel } from './PlatformUserLabel'
+import TwitchUserSearch from './TwitchUserSearch'
 
 export default function ManageCampaign({
   campaign,
@@ -122,9 +124,23 @@ export default function ManageCampaign({
                 'bg-gray-100 border-gray-300': !sound?.isApproved && !sound?.isRejected,
               })}
             >
-              <div className="flex flex-row justify-center items-center gap-2 w-full">
-                <img src={pledge.user.thumb_url} className="w-8 aspect-square rounded-full" />
-                <div className="flex-1 font-bold">{pledge.user.full_name}</div>
+              <div className="flex md:flex-row flex-col justify-center items-center gap-2 w-full">
+                <div className="flex-1 flex items-center gap-3 md:gap-2 mb-2 flex-col md:flex-row w-full md:w-auto">
+                  <PatreonUserLabel image={pledge.user.thumb_url} name={pledge.user.full_name} />
+                  <TwitchUserSearch
+                    patreonId={pledge.user.id}
+                    existing={
+                      pledge.user.twitch
+                        ? {
+                            username: pledge.user.twitch.username,
+                            image: pledge.user.twitch.image,
+                            label: pledge.user.twitch.displayName,
+                            value: pledge.user.twitch.id,
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
                 <div>
                   <span className="font-bold">Entitled Tiers:</span> {pledge.tiers.map((t) => t.title).join(', ')}
                 </div>

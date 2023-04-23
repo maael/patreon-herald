@@ -1,6 +1,6 @@
 import { NextApiHandler, NextApiRequest } from 'next'
 import fetch from 'isomorphic-fetch'
-import { campaigns, patreon } from '~/api'
+import { campaigns, connection, patreon } from '~/api'
 
 function getPath(pathParts) {
   if (pathParts[0] === 'campaigns') {
@@ -80,7 +80,21 @@ const handler: NextApiHandler = async (req, res) => {
         console.info('failed to update entitlements', e)
       }
 
-      res.json(patreons)
+      const patreonTwitchConnections = await connection.getTwitchConnectionsByPatreonIds(
+        patreons.map((p) => p.user.id).filter(Boolean)
+      )
+
+      const embellished = patreons.map((p) => {
+        return {
+          ...p,
+          user: {
+            ...p.user,
+            twitch: patreonTwitchConnections.get(p.user.id) || {},
+          },
+        }
+      })
+
+      res.json(embellished)
     } else {
       const patreonPath = getPath(pathParts)
       if (!patreonPath) throw new Error('No matching path')

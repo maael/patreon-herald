@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { signIn, useSession } from 'next-auth/react'
 import { FaQuestion, FaTwitch } from 'react-icons/fa'
 

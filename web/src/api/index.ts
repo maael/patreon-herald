@@ -34,6 +34,18 @@ export const connection = {
     const result = (await ConnectionModel.findOne({ 'patreon.id': patreonId }, { twitch: 1 }).lean()) as Connection
     return result?.twitch
   },
+  /**
+   * Gets associated twitch details for patreon accounts
+   * Used during patreon members call
+   */
+  getTwitchConnectionsByPatreonIds: async (patreonIds: string[]) => {
+    await dbConnect()
+    const result = (await ConnectionModel.find(
+      { 'patreon.id': patreonIds },
+      { 'patreon.id': 1, twitch: 1 }
+    ).lean()) as Connection[]
+    return new Map(result.map((r) => [r.patreon.id, r.twitch]))
+  },
 }
 
 export const campaigns = {
@@ -360,5 +372,35 @@ export const patreon = {
         },
       }
     ).then((r) => r.json())
+  },
+}
+
+export const twitch = {
+  searchUser: async (search?: string) => {
+    if (!search || search.length < 3) {
+      throw new Error('Requires search input')
+    }
+    const tokenRequest = await fetch('https://id.twitch.tv/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `client_id=z0ccdyhk4y208gwtkhxyeyj14dwv7h&client_secret=b565p67sa6iix93voqx4u3xwf4vh17&grant_type=client_credentials`,
+    })
+    const tokenData = await tokenRequest.json()
+    if (!tokenData?.access_token) {
+      throw new Error('Failed to get token')
+    }
+    const searchRequest = await fetch(
+      `https://api.twitch.tv/helix/search/channels?query=${encodeURIComponent(search)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData?.access_token}`,
+          'Client-Id': 'z0ccdyhk4y208gwtkhxyeyj14dwv7h',
+        },
+      }
+    )
+    const searchData = await searchRequest.json()
+    return searchData.data
   },
 }

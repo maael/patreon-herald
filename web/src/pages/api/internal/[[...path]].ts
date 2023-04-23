@@ -1,7 +1,7 @@
 import { NextApiHandler } from 'next'
 import { unstable_getServerSession } from 'next-auth'
 import { authOptions } from '~/pages/api/auth/[...nextauth]'
-import { campaigns, patreon } from '~/api'
+import { campaigns, connection, patreon, twitch } from '~/api'
 
 const internalApi: { [k: string]: NextApiHandler } = {
   /**
@@ -114,6 +114,33 @@ const internalApi: { [k: string]: NextApiHandler } = {
       res.status(500).json({ error: e })
     }
   },
+  /**
+   * GET /internal/twitch
+   */
+  twitch: async (req, res) => {
+    const search = req.query.search?.toString()
+    try {
+      const data = await twitch.searchUser(search)
+      res.json({ success: true, query: search, data })
+    } catch (e) {
+      console.error('[twitch]', e)
+      res.status(500).json({ succes: false, error: e.message, query: search, data: [] })
+    }
+  },
+  /**
+   * PUT /internal/connection/:patreonUserId
+   */
+  upsertConnection: async (req, res) => {
+    try {
+      const pathParts = req.query.path || []
+      const patreonUserId = pathParts[1]
+      await connection.createConnection(patreonUserId, req.body)
+      res.json({ success: true })
+    } catch (e) {
+      console.error('[upsertConnection]', e)
+      res.status(500).json({ succes: false, error: e.message })
+    }
+  },
 }
 
 const handler: NextApiHandler = async (req, res) => {
@@ -140,6 +167,10 @@ const handler: NextApiHandler = async (req, res) => {
       await internalApi.getCampaignForAlert(req, res)
     } else if (pathParts[0] === 'webhooks' && method === 'PUT') {
       await internalApi.refreshWebhooks(req, res)
+    } else if (pathParts[0] === 'twitch' && method === 'GET') {
+      await internalApi.twitch(req, res)
+    } else if (pathParts[0] === 'connection' && method === 'PUT') {
+      await internalApi.upsertConnection(req, res)
     } else {
       res.json({ ok: 1, error: 'Missing endpoint', pathParts })
     }

@@ -6,6 +6,24 @@ import { FaSignOutAlt, FaPatreon } from 'react-icons/fa'
 import TrumpetSvg from './TrumpetSvg'
 import Twitch from './Twitch'
 
+function Patreon({ image, name }: { image?: string | null; name?: string | null }) {
+  return (
+    <div className="flex flex-row gap-3.5 justify-center items-center">
+      <div className="relative">
+        <img
+          className="rounded-full w-10 aspect-square drop-shadow-lg border-2 border-orange-600"
+          src={image || undefined}
+          title={`Logged in as ${name}`}
+        />
+        <div className="bg-white text-orange-500 text-xs p-1.5 rounded-full absolute -right-2 -bottom-2 shadow">
+          <FaPatreon />
+        </div>
+      </div>
+      <div className="font-badscript font-bold text-white text-xl drop-shadow-lg hidden sm:block">{name}</div>
+    </div>
+  )
+}
+
 export default function Header() {
   const session = useSession()
   const router = useRouter()
@@ -23,21 +41,7 @@ export default function Header() {
         {session?.status === 'authenticated' ? (
           <div className="flex flex-row gap-5 sm:gap-8 justify-center items-center mx-5 sm:mx-5 text-white">
             <Twitch />
-            <div className="flex flex-row gap-3.5 justify-center items-center">
-              <div className="relative">
-                <img
-                  className="rounded-full w-10 aspect-square drop-shadow-lg border-2 border-orange-600"
-                  src={session?.data?.user?.image || undefined}
-                  title={`Logged in as ${session?.data?.user?.name}`}
-                />
-                <div className="bg-white text-orange-500 text-xs p-1.5 rounded-full absolute -right-2 -bottom-2 shadow">
-                  <FaPatreon />
-                </div>
-              </div>
-              <div className="font-badscript font-bold text-white text-xl drop-shadow-lg hidden sm:block">
-                {session?.data?.user?.name}
-              </div>
-            </div>
+            <Patreon image={session?.data?.user?.image} name={session?.data?.user?.name} />
           </div>
         ) : null}
         {session?.status === 'authenticated' ? (
