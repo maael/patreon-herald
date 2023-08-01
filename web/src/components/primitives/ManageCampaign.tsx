@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FaCheck, FaCheckCircle, FaSave, FaSpinner, FaTimes, FaTimesCircle } from 'react-icons/fa'
 import { useQuery } from 'react-query'
 import { toast } from 'react-hot-toast'
@@ -20,6 +20,11 @@ export default function ManageCampaign({
   accessToken?: string
   refetch: () => void
 }) {
+  const [tier, setTier] = useState(() => internalCampaign?.entitledCriteria?.tierId)
+  useEffect(() => {
+    setTier(internalCampaign?.entitledCriteria?.tierId)
+  }, [internalCampaign?.entitledCriteria?.tierId])
+
   const { data: membersData } = useQuery(['patreon', 'creator', 'members', campaign?.id], {
     enabled: !!accessToken && !!campaign?.id,
     queryFn: async () => {
@@ -38,6 +43,13 @@ export default function ManageCampaign({
   const rewards = campaignData?.included?.filter(
     (i) => i.type === 'reward' && rewardIds.has(i.id) && i.attributes.published
   )
+
+  const filteredMembersData = useMemo(() => {
+    const tierReward = rewards?.find((r) => r.id === tier)
+    return membersData
+      ?.filter((m) => m.tiers.some((t) => t.amount_cents >= tierReward?.attributes?.amount_cents))
+      .sort((a, b) => a.user.full_name.toLowerCase().localeCompare(b.user.full_name.toLowerCase()))
+  }, [membersData, rewards, tier])
 
   const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
   return (
@@ -85,7 +97,7 @@ export default function ManageCampaign({
         >
           <div>
             <span className="font-bold">Starting Tier:</span>
-            <select defaultValue={internalCampaign?.entitledCriteria?.tierId}>
+            <select value={tier} onChange={(e) => setTier(e.target.value)}>
               {rewards.map((reward) => {
                 return (
                   <option key={reward.id} value={reward.id}>
@@ -110,11 +122,12 @@ export default function ManageCampaign({
         </form>
       </div>
       <h2 className="font-bold">
-        {membersData?.length || 0} Pledge{membersData?.length === 1 ? '' : 's'}
+        {filteredMembersData?.length || 0} Pledge{filteredMembersData?.length === 1 ? '' : 's'}
       </h2>
       <div className="flex flex-col gap-2 w-full">
-        {membersData?.map((pledge) => {
+        {filteredMembersData?.map((pledge) => {
           const sound = campaignSounds.get(pledge.user.id) as any
+          const entitledTiers = pledge.tiers.map((t) => t.title).join(', ')
           return (
             <div
               key={pledge.user.id}
@@ -141,58 +154,64 @@ export default function ManageCampaign({
                     }
                   />
                 </div>
-                <div>
-                  <span className="font-bold">Entitled Tiers:</span> {pledge.tiers.map((t) => t.title).join(', ')}
-                </div>
+                {entitledTiers ? (
+                  <div>
+                    <span className="font-bold">Entitled Tiers:</span> {entitledTiers}
+                  </div>
+                ) : null}
               </div>
               <div className="flex flex-col md:flex-row justify-between items-center gap-2 w-full">
                 <div className="flex flex-row justify-center md:justify-start items-center gap-2 w-full">
-                  <div>
-                    <button
-                      className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
-                      onClick={async () => {
-                        try {
-                          await fetch(
-                            `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                            {
-                              method: 'PATCH',
+                  {sound ? (
+                    <>
+                      <div>
+                        <button
+                          className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
+                          onClick={async () => {
+                            try {
+                              await fetch(
+                                `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                                {
+                                  method: 'PATCH',
+                                }
+                              )
+                              toast.success('Approved')
+                              refetch()
+                            } catch (e) {
+                              console.error('[approve:error]', e)
+                              toast.error('Error, please try again')
                             }
-                          )
-                          toast.success('Approved')
-                          refetch()
-                        } catch (e) {
-                          console.error('[approve:error]', e)
-                          toast.error('Error, please try again')
-                        }
-                      }}
-                    >
-                      <FaCheck />
-                      {sound?.isApproved ? 'Approved' : 'Approve'}
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
-                      onClick={async () => {
-                        try {
-                          await fetch(
-                            `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                            {
-                              method: 'DELETE',
+                          }}
+                        >
+                          <FaCheck />
+                          {sound?.isApproved ? 'Approved' : 'Approve'}
+                        </button>
+                      </div>
+                      <div>
+                        <button
+                          className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
+                          onClick={async () => {
+                            try {
+                              await fetch(
+                                `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                                {
+                                  method: 'DELETE',
+                                }
+                              )
+                              refetch()
+                              toast.success('Rejected')
+                            } catch (e) {
+                              console.error('[reject:error]', e)
+                              toast.error('Error, please try again')
                             }
-                          )
-                          refetch()
-                          toast.success('Rejected')
-                        } catch (e) {
-                          console.error('[reject:error]', e)
-                          toast.error('Error, please try again')
-                        }
-                      }}
-                    >
-                      <FaTimes />
-                      {sound?.isRejected ? 'Rejected' : 'Reject'}
-                    </button>
-                  </div>
+                          }}
+                        >
+                          <FaTimes />
+                          {sound?.isRejected ? 'Rejected' : 'Reject'}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 <SoundUpload
                   campaignId={internalCampaign?.patreonCampaignId}
