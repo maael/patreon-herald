@@ -124,7 +124,7 @@ const internalApi: { [k: string]: NextApiHandler } = {
       res.json({ success: true, query: search, data })
     } catch (e) {
       console.error('[twitch]', e)
-      res.status(500).json({ succes: false, error: e.message, query: search, data: [] })
+      res.status(500).json({ success: false, error: e.message, query: search, data: [] })
     }
   },
   /**
