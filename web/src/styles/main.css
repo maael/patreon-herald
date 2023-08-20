@@ -24,3 +24,18 @@ button[type='button'],
 button[type='submit'] {
   @apply flex flex-row gap-1 justify-center items-center bg-black text-white py-2 px-5 rounded-md shadow-md transition-transform hover:scale-105;
 }
+
+input[type='range'] {
+  -webkit-appearance: none;
+  @apply h-1 bg-gray-400 w-full rounded-full outline-none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  @apply bg-orange-500 w-5 h-5 rounded-full cursor-pointer;
+}
+
+input[type='range']::-moz-range-thumb {
+  @apply bg-orange-500 w-5 h-5 rounded-full cursor-pointer;
+}

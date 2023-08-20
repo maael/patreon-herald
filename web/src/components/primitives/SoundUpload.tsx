@@ -1,9 +1,10 @@
 import { useS3Upload } from 'next-s3-upload'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { FaExclamationCircle, FaFileUpload, FaSpinner } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import SoundPlayer from './SoundPlayer'
+import { useDebounce } from '../hooks/useDebounce'
 
 const ONE_MB = 1000000
 
@@ -77,6 +78,10 @@ export default function SoundUpload({
     },
   })
 
+  const [volume, setVolume] = useState(1)
+  const debouncedVolume = useDebounce(volume, 1_000)
+  useEffect(() => console.info('debounce', debouncedVolume), [debouncedVolume])
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-row gap-2">
@@ -86,7 +91,15 @@ export default function SoundUpload({
             {isLoading ? <FaSpinner className="animate animate-spin" /> : <FaFileUpload />}
           </div>
         </div>
-        {existingSound || savedFile ? <SoundPlayer src={existingSound || savedFile} /> : null}
+        {existingSound || savedFile ? (
+          <SoundPlayer
+            src={
+              'https://s3.amazonaws.com/files.mael-cdn.com/patreon-herald/9441253/88555402--e2274fd6-8237-4322-9d81-689bd8bfed45.ogg'
+            }
+            volume={volume}
+            onVolumeChange={setVolume}
+          />
+        ) : null}
       </div>
       {fileRejections.length > 0 ? (
         <div className="bg-red-500 text-white rounded-md px-2 flex flex-row gap-1 justify-center items-center text-sm">
