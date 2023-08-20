@@ -29,8 +29,10 @@ export default function SoundPlayer({
   )}:${zeroPad(duration.seconds || 1)}`
   useEffect(() => {
     let source: MediaElementAudioSourceNode
-    if (ref.current) {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    let audioCtx: AudioContext
+    if (ref.current && isPlaying) {
+      console.info('[audio] connect and create')
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
       source = audioCtx.createMediaElementSource(ref.current)
       // create a gain node
       const gainNode = audioCtx.createGain()
@@ -38,17 +40,18 @@ export default function SoundPlayer({
       source.connect(gainNode)
       // connect the gain node to an output destination
       gainNode.connect(audioCtx.destination)
-
-      return () => {
-        source.disconnect()
-      }
     }
     return () => {
       if (source) {
+        console.info('[audio] disconnect')
         source.disconnect()
       }
+      if (audioCtx) {
+        console.info('[audio] close')
+        audioCtx.close()
+      }
     }
-  }, [])
+  }, [volume, isPlaying])
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-row gap-1 justify-center items-center">
@@ -99,7 +102,8 @@ export default function SoundPlayer({
           className="w-full"
           onChange={(e) => {
             if (ref.current) {
-              ref.current.volume = Math.min(volume, 1) // DANGER: Need to figure out how to boost
+              console.info('would set volume')
+              // ref.current.volume = Math.min(volume, 1) // DANGER: Need to figure out how to boost
             }
             onVolumeChange(Number(e.target.value))
           }}
