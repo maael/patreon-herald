@@ -92,13 +92,7 @@ export default function SoundUpload({
           </div>
         </div>
         {existingSound || savedFile ? (
-          <SoundPlayer
-            src={
-              'https://s3.amazonaws.com/files.mael-cdn.com/patreon-herald/9441253/88555402--e2274fd6-8237-4322-9d81-689bd8bfed45.ogg'
-            }
-            volume={volume}
-            onVolumeChange={setVolume}
-          />
+          <SoundPlayer src={existingSound || savedFile} volume={volume} onVolumeChange={setVolume} />
         ) : null}
       </div>
       {fileRejections.length > 0 ? (
