@@ -4,6 +4,21 @@ import { FaDownload, FaPause, FaPlay, FaVolumeUp } from 'react-icons/fa'
 
 const zeroPad = (num) => String(num).padStart(2, '0')
 
+function makeAudio(target: HTMLAudioElement, audio?: any) {
+  if (audio) {
+    if (audio.ctx.state === 'suspended') {
+      audio.ctx.resume()
+    }
+    return audio
+  }
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  const source = ctx.createMediaElementSource(target)
+  const gain = ctx.createGain()
+  source.connect(gain)
+  gain.connect(ctx.destination)
+  return { ctx, source, gain }
+}
+
 export default function SoundPlayer({
   src,
   volume = 1,
@@ -27,31 +42,14 @@ export default function SoundPlayer({
   const formatted = `${zeroPad(currentTime.minutes)}:${zeroPad(currentTime.seconds)}/${zeroPad(
     duration.minutes
   )}:${zeroPad(duration.seconds || 1)}`
-  useEffect(() => {
-    let source: MediaElementAudioSourceNode
-    let audioCtx: AudioContext
-    if (ref.current && isPlaying) {
-      console.info('[audio] connect and create')
-      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      source = audioCtx.createMediaElementSource(ref.current)
-      // create a gain node
-      const gainNode = audioCtx.createGain()
-      gainNode.gain.value = 2 // double the volume
-      source.connect(gainNode)
-      // connect the gain node to an output destination
-      gainNode.connect(audioCtx.destination)
-    }
-    return () => {
-      if (source) {
-        console.info('[audio] disconnect')
-        source.disconnect()
+  const [audio, setAudio] = useState<
+    | {
+        ctx: AudioContext
+        source: MediaElementAudioSourceNode
+        gain: GainNode
       }
-      if (audioCtx) {
-        console.info('[audio] close')
-        audioCtx.close()
-      }
-    }
-  }, [volume, isPlaying])
+    | undefined
+  >()
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-row gap-1 justify-center items-center">
@@ -80,11 +78,17 @@ export default function SoundPlayer({
         <audio
           ref={ref}
           className="appearance-none"
-          onPlay={() => setIsPlaying(true)}
+          onPlay={(e) => {
+            setIsPlaying(true)
+            setAudio(makeAudio(e.currentTarget, audio))
+          }}
           onPause={() => setIsPlaying(false)}
           crossOrigin="anonymous"
           onTimeUpdate={(e) => {
             setProgress(e.currentTarget.currentTime)
+          }}
+          onLoadStart={(e) => {
+            setAudio(makeAudio(e.currentTarget, audio))
           }}
         >
           <source src={src} />
@@ -96,16 +100,16 @@ export default function SoundPlayer({
         <input
           type="range"
           min="0"
-          max="2"
+          max="4"
           step="0.01"
           value={volume?.toString()}
           className="w-full"
           onChange={(e) => {
-            if (ref.current) {
-              console.info('would set volume')
-              // ref.current.volume = Math.min(volume, 1) // DANGER: Need to figure out how to boost
+            const newVolume = Number(e.target.value)
+            if (ref.current && audio) {
+              audio.gain.gain.value = newVolume
             }
-            onVolumeChange(Number(e.target.value))
+            onVolumeChange(newVolume)
           }}
         />
       </div>
