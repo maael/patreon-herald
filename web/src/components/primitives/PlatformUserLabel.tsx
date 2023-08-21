@@ -10,6 +10,9 @@ export function PatreonUserLabel({ image, name }: { image?: string | null; name?
             className="rounded-full w-8 aspect-square drop-shadow-lg border-2 border-orange-600"
             src={image || undefined}
             title={`${name}`}
+            onError={(e) => {
+              e.currentTarget.src = '/images/missing-twitch-image.png'
+            }}
           />
           <div className="bg-white text-orange-500 text-xs p-1.5 rounded-full absolute -right-2 -bottom-2 shadow">
             <FaPatreon />
@@ -30,6 +33,9 @@ export function TwitchUserLabel({ image, name }: { image?: string | null; name?:
             className="rounded-full w-8 aspect-square drop-shadow-lg border-2 border-purple-600"
             src={image || undefined}
             title={`${name}`}
+            onError={(e) => {
+              e.currentTarget.src = '/images/missing-twitch-image.png'
+            }}
           />
           <div className="bg-white text-purple-500 text-xs p-1.5 rounded-full absolute -right-2 -bottom-2 shadow">
             <FaTwitch />

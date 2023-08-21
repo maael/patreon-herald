@@ -34,6 +34,9 @@ function TwitchUserOptionInner({
         className="rounded-full w-7 aspect-square drop-shadow-lg border-2 border-purple-600"
         src={image || undefined}
         title={`${label}`}
+        onError={(e) => {
+          e.currentTarget.src = '/images/missing-twitch-image.png'
+        }}
       />
       <div className="text-black text-lg drop-shadow-lg text-ellipsis whitespace-nowrap max-w-full">{label}</div>
     </div>
