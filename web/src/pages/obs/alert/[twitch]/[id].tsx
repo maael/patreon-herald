@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from 'react-query'
 import tmi from 'tmi.js'
 
-function makeAudio(target: HTMLAudioElement, audio?: any) {
+function makeAudio(target: HTMLAudioElement, audio?: any, volume?: number) {
   if (audio) {
     if (audio.ctx.state === 'suspended') {
       audio.ctx.resume()
@@ -14,6 +14,7 @@ function makeAudio(target: HTMLAudioElement, audio?: any) {
   const source = ctx.createMediaElementSource(target)
   const gain = ctx.createGain()
   source.connect(gain)
+  if (volume !== undefined) gain.gain.value = volume
   gain.connect(ctx.destination)
   return { ctx, source, gain }
 }

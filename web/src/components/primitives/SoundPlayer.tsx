@@ -4,7 +4,7 @@ import { FaDownload, FaPause, FaPlay, FaVolumeUp } from 'react-icons/fa'
 
 const zeroPad = (num) => String(num).padStart(2, '0')
 
-function makeAudio(target: HTMLAudioElement, audio?: any) {
+function makeAudio(target: HTMLAudioElement, audio?: any, volume?: number) {
   if (audio) {
     if (audio.ctx.state === 'suspended') {
       audio.ctx.resume()
@@ -14,6 +14,7 @@ function makeAudio(target: HTMLAudioElement, audio?: any) {
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
   const source = ctx.createMediaElementSource(target)
   const gain = ctx.createGain()
+  if (volume !== undefined) gain.gain.value = volume
   source.connect(gain)
   gain.connect(ctx.destination)
   return { ctx, source, gain }
@@ -80,7 +81,7 @@ export default function SoundPlayer({
           className="appearance-none"
           onPlay={(e) => {
             setIsPlaying(true)
-            setAudio(makeAudio(e.currentTarget, audio))
+            setAudio(makeAudio(e.currentTarget, audio, volume))
           }}
           onPause={() => setIsPlaying(false)}
           crossOrigin="anonymous"
@@ -88,7 +89,7 @@ export default function SoundPlayer({
             setProgress(e.currentTarget.currentTime)
           }}
           onLoadStart={(e) => {
-            setAudio(makeAudio(e.currentTarget, audio))
+            setAudio(makeAudio(e.currentTarget, audio, volume))
           }}
         >
           <source src={src} />
