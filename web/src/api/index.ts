@@ -15,7 +15,7 @@ export const connection = {
    */
   createInitial: async (patreon: Connection['patreon']) => {
     await dbConnect()
-    const result = await ConnectionModel.findOneAndUpdate({ 'patreon.id': patreon.id }, { patreon }, { upsert: true })
+    const result = await ConnectionModel.findOneAndUpdate({ 'patreon.id': patreon?.id }, { patreon }, { upsert: true })
     return result
   },
   /**
@@ -23,7 +23,7 @@ export const connection = {
    */
   createConnection: async (patreonId: string, twitch: Connection['twitch']) => {
     await dbConnect()
-    return ConnectionModel.findOneAndUpdate({ 'patreon.id': patreonId }, { twitch }).lean()
+    return ConnectionModel.findOneAndUpdate({ 'patreon.id': patreonId }, { twitch }, { upsert: true }).lean()
   },
   /**
    * Gets associated twitch details for patreon account, if any
@@ -44,7 +44,15 @@ export const connection = {
       { 'patreon.id': patreonIds },
       { 'patreon.id': 1, twitch: 1 }
     ).lean()) as Connection[]
-    return new Map(result.map((r) => [r.patreon.id, r.twitch]))
+    return new Map(result.map((r) => [r.patreon?.id, r.twitch]))
+  },
+  /**
+   * Used to clean up after removing custom users
+   */
+  deleteCustomUser: async (customId: string) => {
+    if (!customId.startsWith('custom-')) return
+    await dbConnect()
+    return ConnectionModel.deleteOne({ 'patreon.id': customId })
   },
 }
 
@@ -62,7 +70,17 @@ export const campaigns = {
    */
   getCampaignsForUser: async (id: string) => {
     await dbConnect()
-    return CampaignModel.find({ ownerPatreonId: id })
+    const result = await CampaignModel.find({ ownerPatreonId: id }).lean()
+    if (result[0] && result[0].customUsers) {
+      const connections = await connection.getTwitchConnectionsByPatreonIds(result[0].customUsers)
+      result[0].customUsers = result[0].customUsers.map((u) => ({
+        user: {
+          id: u,
+          twitch: connections.get(u),
+        },
+      })) as any
+    }
+    return result
   },
   /**
    * Used in patreon view to control what campaigns are active or not
@@ -220,6 +238,20 @@ export const campaigns = {
   ) => {
     await dbConnect()
     return CampaignModel.updateOne({ _id: campaignId }, { $set: { webhooks } })
+  },
+  /**
+   * Add campaign custom user
+   */
+  addCampaignCustomUser: async (campaignId: string, customUserId: string) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ _id: campaignId }, { $push: { customUsers: customUserId } })
+  },
+  /**
+   * Remove campaign custom user
+   */
+  removeCampaignCustomUser: async (campaignId: string, customUserId: string) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ _id: campaignId }, { $pull: { customUsers: customUserId } })
   },
 }
 
@@ -392,7 +424,7 @@ export const twitch = {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: `client_id=z0ccdyhk4y208gwtkhxyeyj14dwv7h&client_secret=b565p67sa6iix93voqx4u3xwf4vh17&grant_type=client_credentials`,
+      body: `client_id=${process.env.TWITCH_ID}&client_secret=${process.env.TWITCH_SECRET}&grant_type=client_credentials`,
     })
     const tokenData = await tokenRequest.json()
     if (!tokenData?.access_token) {
@@ -403,7 +435,7 @@ export const twitch = {
       {
         headers: {
           Authorization: `Bearer ${tokenData?.access_token}`,
-          'Client-Id': 'z0ccdyhk4y208gwtkhxyeyj14dwv7h',
+          'Client-Id': process.env.TWITCH_ID!,
         },
       }
     )

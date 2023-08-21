@@ -5,8 +5,8 @@ type WithDoc<T> = T
 export interface Connection {
   patreon: {
     id: string
-    username: string
-    image: string
+    username?: string
+    image?: string
     email?: string
   }
   twitch:
@@ -33,8 +33,8 @@ const itemSchema = new Schema<WithDoc<Connection>, ItemModel>(
           type: String,
           unique: true,
         },
-        username: String,
-        image: String,
+        username: { required: false, type: String },
+        image: { required: false, type: String },
         email: { required: false, type: String },
       },
     },

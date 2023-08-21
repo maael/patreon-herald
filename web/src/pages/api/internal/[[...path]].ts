@@ -101,6 +101,32 @@ const internalApi: { [k: string]: NextApiHandler } = {
     res.json(result)
   },
   /**
+   * POST /internal/campaigns/:campaignId/user/:id
+   */
+  addCustomUser: async (req, res) => {
+    const pathParts = req.query.path || []
+    if (pathParts.length !== 3) {
+      const result = await campaigns.addCampaignCustomUser(pathParts[1], pathParts[3])
+      res.json(result)
+    } else {
+      res.status(400).json({ error: 'Missing ID' })
+    }
+  },
+  /**
+   * DELETE /internal/campaigns/:campaignId/user/:id
+   */
+  removeCustomUser: async (req, res) => {
+    const pathParts = req.query.path || []
+    if (pathParts.length !== 3) {
+      const result = await campaigns.removeCampaignCustomUser(pathParts[1], pathParts[3])
+      await campaigns.removeSound(pathParts[1], pathParts[3])
+      await connection.deleteCustomUser(pathParts[3])
+      res.json(result)
+    } else {
+      res.status(400).json({ error: 'Missing ID' })
+    }
+  },
+  /**
    * PUT /internal/webhooks/:campaignId
    */
   refreshWebhooks: async (req, res) => {
@@ -157,6 +183,10 @@ const handler: NextApiHandler = async (req, res) => {
     const method = req.method
     if (pathParts[0] === 'campaigns' && method === 'GET') {
       await internalApi.getCampaigns(req, res)
+    } else if (pathParts[0] === 'campaign' && pathParts[2] === 'user' && method === 'POST') {
+      await internalApi.addCustomUser(req, res)
+    } else if (pathParts[0] === 'campaign' && pathParts[2] === 'user' && method === 'DELETE') {
+      await internalApi.removeCustomUser(req, res)
     } else if (pathParts[0] === 'campaigns' && method === 'POST') {
       await internalApi.createCampaign(req, res)
     } else if (pathParts[0] === 'campaign' && pathParts.at(-1) === 'approve' && method === 'PATCH') {
@@ -182,7 +212,7 @@ const handler: NextApiHandler = async (req, res) => {
     } else if (pathParts[0] === 'connection' && method === 'PUT') {
       await internalApi.upsertConnection(req, res)
     } else {
-      res.json({ ok: 1, error: 'Missing endpoint', pathParts })
+      res.json({ ok: 1, error: 'Missing endpoint', pathParts, method })
     }
   } catch (e) {
     console.error('error', e)

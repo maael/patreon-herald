@@ -2,7 +2,7 @@
 import { FaPatreon, FaTwitch } from 'react-icons/fa'
 
 export function PatreonUserLabel({ image, name }: { image?: string | null; name?: string | null }) {
-  return (
+  return !name && !image ? null : (
     <div className="inline-block mr-1">
       <div className="flex flex-row gap-3 justify-center items-center">
         <div className="relative">

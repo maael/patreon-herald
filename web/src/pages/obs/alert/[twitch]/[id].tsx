@@ -42,7 +42,11 @@ export default function Alert() {
                 const sound = (data?.campaign?.sounds || {})[c.patreon.id] || {}
                 if (!sound.isApproved) return
                 const entitlement = (data?.campaign?.entitlements || {})[c.patreon.id] || {}
-                if ((entitlement.currentlyEntitledAmountsCents || 0) < criteriaCents) return
+                if (
+                  (entitlement.currentlyEntitledAmountsCents || 0) < criteriaCents &&
+                  !c.patreon.id.startsWith('custom-')
+                )
+                  return
                 return [
                   c.twitch.id,
                   { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}`, volume: sound.volume || 1 },
@@ -60,7 +64,7 @@ export default function Alert() {
       }
     | undefined
   >()
-  console.info('[loaded]', { count: data?.size })
+  console.info('[loaded]', { count: data?.size, data })
   useEffect(() => {
     console.info('[connect]', { twitch })
     const client = new tmi.Client({ channels: [twitch] })

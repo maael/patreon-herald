@@ -35,6 +35,7 @@ export interface Campaign {
       isRejected: boolean
     }
   }
+  customUsers: string[]
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -86,6 +87,10 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
         isApproved: { type: Boolean, default: false },
         isRejected: { type: Boolean, default: false },
       },
+    },
+    customUsers: {
+      default: [],
+      type: [String],
     },
     isActive: {
       type: Boolean,

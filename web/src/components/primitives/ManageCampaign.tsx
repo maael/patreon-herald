@@ -1,8 +1,9 @@
 import classNames from 'classnames'
 import { useEffect, useMemo, useState } from 'react'
-import { FaCheck, FaCheckCircle, FaSave, FaSpinner, FaTimes, FaTimesCircle } from 'react-icons/fa'
-import { useQuery } from 'react-query'
+import { FaCheck, FaCheckCircle, FaSave, FaSpinner, FaTimes, FaTimesCircle, FaTrash } from 'react-icons/fa'
+import { useMutation, useQuery } from 'react-query'
 import { toast } from 'react-hot-toast'
+import { v4 as uuid } from 'uuid'
 import SoundUpload from './SoundUpload'
 import { PatreonUserLabel } from './PlatformUserLabel'
 import TwitchUserSearch from './TwitchUserSearch'
@@ -44,14 +45,70 @@ export default function ManageCampaign({
     (i) => i.type === 'reward' && rewardIds.has(i.id) && i.attributes.published
   )
 
-  const filteredMembersData = useMemo(() => {
+  const filteredMembersData = useMemo<any[]>(() => {
     const tierReward = rewards?.find((r) => r.id === tier)
-    return membersData
-      ?.filter((m) => m.tiers.some((t) => t.amount_cents >= tierReward?.attributes?.amount_cents))
-      .sort((a, b) => a.user.full_name.toLowerCase().localeCompare(b.user.full_name.toLowerCase()))
-  }, [membersData, rewards, tier])
+    return (internalCampaign?.customUsers || [])
+      .filter((u) => !u.user.twitch)
+      .concat(
+        (internalCampaign?.customUsers || [])
+          .filter((u) => u.user.twitch)
+          .sort((a, b) =>
+            a.user.twitch.displayName.toLowerCase().localeCompare(b.user.twitch.displayName.toLowerCase())
+          )
+      )
+      .concat(
+        membersData
+          ?.filter((m) => m.tiers.some((t) => t.amount_cents >= tierReward?.attributes?.amount_cents))
+          .sort((a, b) => a.user.full_name.toLowerCase().localeCompare(b.user.full_name.toLowerCase()))
+      )
+      .filter(Boolean)
+  }, [membersData, rewards, tier, internalCampaign?.customUsers])
 
   const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
+
+  const { mutate: addUser, isLoading: isAddingUser } = useMutation({
+    mutationKey: ['new-custom-user', internalCampaign?._id],
+    mutationFn: async () => {
+      const newId = `custom-${uuid()}`
+      try {
+        const result = await fetch(`/api/internal/campaign/${internalCampaign?._id}/user/${newId}`, {
+          method: 'POST',
+        }).then((r) => r.json())
+        await refetch()
+        return result
+      } catch (e) {
+        return { error: e.toString(), accessToken }
+      }
+    },
+    onError: () => {
+      toast.error('Something went wrong, please try again')
+    },
+    onSuccess: () => {
+      toast.success('Added custom user!')
+    },
+  })
+
+  const { mutate: deleteUser, isLoading: isDeletingUser } = useMutation<unknown, unknown, string>({
+    mutationKey: ['delete-custom-user', internalCampaign?._id],
+    mutationFn: async (userId) => {
+      try {
+        const result = await fetch(`/api/internal/campaign/${internalCampaign?._id}/user/${userId}`, {
+          method: 'DELETE',
+        }).then((r) => r.json())
+        await refetch()
+        return result
+      } catch (e) {
+        return { error: e.toString(), accessToken }
+      }
+    },
+    onError: () => {
+      toast.error('Something went wrong, please try again')
+    },
+    onSuccess: () => {
+      toast.success('Deleted custom user!')
+    },
+  })
+
   return (
     <div className="flex flex-col gap-2 justify-center items-center bg-white border-gray-200 border-l border-r border-b rounded-b-lg mx-2 md:mx-5 relative -top-2 px-5 pt-5 pb-4 drop-shadow-lg">
       <div className="flex flex-row gap-1 justify-between items-center w-full">
@@ -121,13 +178,18 @@ export default function ManageCampaign({
           </button>
         </form>
       </div>
+      <div>
+        <button onClick={() => addUser()} disabled={isAddingUser}>
+          {isAddingUser ? <FaSpinner className="animate animate-spin" /> : 'Add custom user'}
+        </button>
+      </div>
       <h2 className="font-bold">
         {filteredMembersData?.length || 0} Pledge{filteredMembersData?.length === 1 ? '' : 's'}
       </h2>
       <div className="flex flex-col gap-2 w-full">
         {filteredMembersData?.map((pledge) => {
           const sound = campaignSounds.get(pledge.user.id) as any
-          const entitledTiers = pledge.tiers.map((t) => t.title).join(', ')
+          const entitledTiers = (pledge?.tiers || []).map((t) => t.title).join(', ')
           return (
             <div
               key={pledge.user.id}
@@ -138,7 +200,7 @@ export default function ManageCampaign({
               })}
             >
               <div className="flex md:flex-row flex-col justify-center items-center gap-2 w-full">
-                <div className="flex-1 flex items-center gap-3 md:gap-2 mb-2 flex-col md:flex-row w-full md:w-auto">
+                <div className="flex-1 flex items-center gap-3 md:gap-2 mb-2 flex-col md:flex-row w-full md:w-auto relative">
                   <PatreonUserLabel image={pledge.user.thumb_url} name={pledge.user.full_name} />
                   <TwitchUserSearch
                     patreonId={pledge.user.id}
@@ -153,6 +215,17 @@ export default function ManageCampaign({
                         : undefined
                     }
                   />
+                  <div className="flex-1"></div>
+                  {pledge.user.id.startsWith('custom-') ? (
+                    <button
+                      className="py-2 px-3 text-xs bg-red-600 absolute top-0 right-0"
+                      title="Delete custom user"
+                      onClick={() => deleteUser(pledge.user.id)}
+                      disabled={isDeletingUser}
+                    >
+                      {isDeletingUser ? <FaSpinner className="animate animate-spin" /> : <FaTrash />}
+                    </button>
+                  ) : null}
                 </div>
                 {entitledTiers ? (
                   <div>
