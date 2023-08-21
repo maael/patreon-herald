@@ -1,5 +1,5 @@
 import { useS3Upload } from 'next-s3-upload'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { FaExclamationCircle, FaFileUpload, FaSpinner } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -80,7 +80,23 @@ export default function SoundUpload({
 
   const [volume, setVolume] = useState(1)
   const debouncedVolume = useDebounce(volume, 1_000)
-  useEffect(() => console.info('debounce', debouncedVolume), [debouncedVolume])
+  const volumeInitRef = useRef(false)
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;(async () => {
+      if (!volumeInitRef.current) {
+        volumeInitRef.current = true
+        return
+      }
+      await fetch(`/api/internal/campaign/${campaignId}/${patronId}/volume`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ volume: debouncedVolume }),
+      })
+    })()
+  }, [debouncedVolume, campaignId, patronId])
 
   return (
     <div className="flex flex-col gap-1">

@@ -82,6 +82,7 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
       type: Map,
       of: {
         sound: String,
+        volume: { type: Number, default: 1 },
         isApproved: { type: Boolean, default: false },
         isRejected: { type: Boolean, default: false },
       },

@@ -173,6 +173,13 @@ export const campaigns = {
     )
   },
   /**
+   * Creator sets volume for a patreon sound
+   */
+  setSoundVolume: async (patreonCampaignId: string, patronId: string, volume: number) => {
+    await dbConnect()
+    return CampaignModel.updateOne({ patreonCampaignId }, { $set: { [`sounds.${patronId}.volume`]: volume } })
+  },
+  /**
    * Get sound for campaign to show to patreon
    */
   getUserSounds: async (patreonCampaignIds: string[], patronId: string) => {

@@ -24,11 +24,17 @@ export default function Alert() {
   const {
     query: { id, twitch },
   } = useRouter()
+  console.info('[mount]', { id, twitch })
   const { data } = useQuery(['alerts', id], {
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnMount: true,
+    cacheTime: 30_000,
     queryFn: async () =>
       fetch(`/api/internal/alert/${id}`)
         .then((r) => r.json())
         .then((data) => {
+          console.info('[fetch]', data)
           const criteriaCents = data?.campaign?.entitledCriteria?.amountCents
           return new Map<string, any>(
             data.connections
@@ -37,7 +43,10 @@ export default function Alert() {
                 if (!sound.isApproved) return
                 const entitlement = (data?.campaign?.entitlements || {})[c.patreon.id] || {}
                 if ((entitlement.currentlyEntitledAmountsCents || 0) < criteriaCents) return
-                return [c.twitch.id, { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}` }]
+                return [
+                  c.twitch.id,
+                  { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}`, volume: sound.volume || 1 },
+                ]
               })
               .filter(Boolean)
           )
@@ -62,16 +71,16 @@ export default function Alert() {
 
     client.on('message', (_channel, tags) => {
       const userId = tags['user-id']
-      const sound = data?.get(userId)?.sound
-      if (ref.current && sound) {
+      const sound = data?.get(userId)
+      if (ref.current && sound.sound) {
         // && !seenList.current.has(userId)) {
         console.info('[playing]', { userId, displayName: tags['display-name'], sound, audio })
         if (audio) {
-          console.info('[audio:volume]', 5)
-          audio.gain.gain.value = 0.1
+          console.info('[audio:volume]', sound.volume)
+          audio.gain.gain.value = sound.volume || 1
         }
         seenList.current.add(userId)
-        ref.current.src = sound
+        ref.current.src = sound.sound
         ref.current.pause()
         ref.current.currentTime = 0
         ref.current.load()
@@ -85,19 +94,18 @@ export default function Alert() {
   }, [data, twitch, audio, setAudio])
 
   return (
-    <audio
-      controls
-      ref={ref}
-      className="invisible"
-      crossOrigin="anonymous"
-      onPlay={(e) => {
-        setAudio(makeAudio(e.currentTarget, audio))
-      }}
-      onLoadStart={(e) => {
-        setAudio(makeAudio(e.currentTarget, audio))
-      }}
-    >
-      <source />
-    </audio>
+    <>
+      <style global jsx>{`
+        html,
+        body,
+        body > div {
+          background: transparent !important;
+          opacity: 0;
+        }
+      `}</style>
+      <audio controls ref={ref} className="invisible" crossOrigin="anonymous">
+        <source />
+      </audio>
+    </>
   )
 }

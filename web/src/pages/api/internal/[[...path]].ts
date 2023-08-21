@@ -69,6 +69,14 @@ const internalApi: { [k: string]: NextApiHandler } = {
     res.json({ ok: 1 })
   },
   /**
+   * PUT /internal/campaign/:id/:patronId/volume
+   */
+  setUserSoundVolume: async (req, res) => {
+    const pathParts = req.query.path || []
+    await campaigns.setSoundVolume(pathParts[1], pathParts[2], req.body.volume)
+    res.json({ ok: 1 })
+  },
+  /**
    * GET /internal/sounds/:patronId
    */
   getUserSounds: async (req, res) => {
@@ -155,6 +163,8 @@ const handler: NextApiHandler = async (req, res) => {
       await internalApi.approveUserSound(req, res)
     } else if (pathParts[0] === 'campaign' && pathParts.at(-1) === 'approve' && method === 'DELETE') {
       await internalApi.rejectUserSound(req, res)
+    } else if (pathParts[0] === 'campaign' && pathParts.at(-1) === 'volume' && method === 'PUT') {
+      await internalApi.setUserSoundVolume(req, res)
     } else if (pathParts[0] === 'campaign' && method === 'PATCH') {
       await internalApi.updateCampaign(req, res)
     } else if (pathParts[0] === 'campaign' && method === 'POST') {
