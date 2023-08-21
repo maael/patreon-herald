@@ -290,6 +290,7 @@ export default function ManageCampaign({
                   campaignId={internalCampaign?.patreonCampaignId}
                   patronId={pledge?.user?.id}
                   existingSound={sound?.sound ? `https://files.mael-cdn.com${sound.sound}` : undefined}
+                  existingVolume={sound?.volume}
                   autoApprove
                   refetch={refetch}
                 />

@@ -76,8 +76,7 @@ export default function Alert() {
     client.on('message', (_channel, tags) => {
       const userId = tags['user-id']
       const sound = data?.get(userId)
-      if (ref.current && sound.sound) {
-        // && !seenList.current.has(userId)) {
+      if (ref.current && sound.sound && !seenList.current.has(userId)) {
         console.info('[playing]', { userId, displayName: tags['display-name'], sound, audio })
         if (audio) {
           console.info('[audio:volume]', sound.volume)

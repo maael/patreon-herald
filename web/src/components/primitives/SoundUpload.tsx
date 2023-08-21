@@ -12,12 +12,14 @@ export default function SoundUpload({
   campaignId,
   patronId,
   existingSound,
+  existingVolume,
   autoApprove,
   refetch,
 }: {
   campaignId: string
   patronId: string
   existingSound?: string
+  existingVolume?: number
   autoApprove?: boolean
   refetch: () => void
 }) {
@@ -79,7 +81,7 @@ export default function SoundUpload({
     },
   })
 
-  const [volume, setVolume] = useState(1)
+  const [volume, setVolume] = useState(existingVolume || 1)
   const debouncedVolume = useDebounce(volume, 1_000)
   const volumeInitRef = useRef(false)
   useEffect(() => {
@@ -89,13 +91,19 @@ export default function SoundUpload({
         volumeInitRef.current = true
         return
       }
-      await fetch(`/api/internal/campaign/${campaignId}/${patronId}/volume`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ volume: debouncedVolume }),
-      })
+      try {
+        await fetch(`/api/internal/campaign/${campaignId}/${patronId}/volume`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ volume: debouncedVolume }),
+        })
+        toast.success('Saved volume!')
+      } catch (e) {
+        console.error(e)
+        toast.error('Something went wrong saving volume, please try again!')
+      }
     })()
   }, [debouncedVolume, campaignId, patronId])
 
