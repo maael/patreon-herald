@@ -32,9 +32,14 @@ export default function Twitch() {
   )
 }
 
-export function TwitchPrompt() {
+export function useTwitch() {
   const session = useSession() as any
-  return session?.data?.twitch ? null : (
+  return session?.data?.twitch
+}
+
+export function TwitchPrompt() {
+  const twitch = useTwitch()
+  return twitch ? null : (
     <button onClick={() => signIn('twitch')}>
       <FaTwitch className="text-purple-600 mr-1" /> Connect Twitch
     </button>

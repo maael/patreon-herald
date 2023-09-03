@@ -15,6 +15,7 @@ export default function SoundUpload({
   existingVolume,
   autoApprove,
   refetch,
+  hideVolume = false,
 }: {
   campaignId: string
   patronId: string
@@ -22,6 +23,7 @@ export default function SoundUpload({
   existingVolume?: number
   autoApprove?: boolean
   refetch: () => void
+  hideVolume?: boolean
 }) {
   const [savedFile, setSavedFile] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(false)
@@ -117,7 +119,12 @@ export default function SoundUpload({
           </div>
         </div>
         {existingSound || savedFile ? (
-          <SoundPlayer src={existingSound || savedFile} volume={volume} onVolumeChange={setVolume} />
+          <SoundPlayer
+            src={existingSound || savedFile}
+            volume={volume}
+            onVolumeChange={setVolume}
+            hideVolume={hideVolume}
+          />
         ) : null}
       </div>
       {fileRejections.length > 0 ? (

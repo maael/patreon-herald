@@ -56,7 +56,6 @@ export default function Index() {
             Are you a creator? Swap to the creator view here →
           </a>
         </Link>
-        <TwitchPrompt />
         <h2 className="text-3xl text-center mt-3 mb-2">Campaigns</h2>
         {!membershipData?.memberships || membershipData?.memberships.length === 0 ? (
           <div className="text-2xl text-center">No campaigns to see here!</div>
@@ -94,13 +93,15 @@ export default function Index() {
                   </h2>
                   <h3>{m.campaign.creation_name}</h3>
                 </div>
-                {internalCampaign ? (
+                <TwitchPrompt />
+                {session?.data?.twitch && internalCampaign ? (
                   <div className="flex flex-col justify-center items-center gap-2 mt-2">
                     <SoundUpload
                       campaignId={m.campaign.id}
                       patronId={membershipData.user.id}
                       existingSound={existingSound}
                       refetch={refetchInternal}
+                      hideVolume
                     />
                     <div
                       className={cls('flex flex-row gap-1 justify-center items-center', {
@@ -117,48 +118,15 @@ export default function Index() {
                         <>
                           <FaTimes /> Rejected
                         </>
-                      ) : (
+                      ) : userSound ? (
                         'Pending Approval'
+                      ) : (
+                        'Upload your sound file!'
                       )}
                     </div>
                   </div>
                 ) : null}
               </div>
-              // <div
-              //   key={m.id}
-              // className={cls('flex flex-col gap-2 items-center bg-gray-200 py-5 px-2 rounded-md shadow-md', {
-              //   'opacity-60 pointer-events-none': !internalCampaign,
-              // })}
-              // >
-              //   <div key={m.id} className="flex flex-row gap-2 items-center">
-              //     <img
-              //       src={m.campaign.image_small_url || m.campaign.creator.thumb_url}
-              //       className="w-10 aspect-square rounded-full"
-              //     />
-              //     <div className="font-bold">{m.campaign.creator.full_name}</div>
-              //     <div>{m.campaign.creation_name}</div>
-              //     <div>
-              //       {internalCampaigns?.campaigns === undefined ? (
-              //         <FaSpinner className="animate animate-spin" />
-              //       ) : internalCampaigns.campaigns?.has(m.campaign.id) ? (
-              //         <FaCheckCircle className="text-green-600" />
-              //       ) : (
-              //         <FaTimesCircle className="text-red-600" />
-              //       )}
-              //     </div>
-              //   </div>
-              //   {internalCampaign ? (
-              //     <div>
-              //       <SoundUpload
-              //         campaignId={m.campaign.id}
-              //         patronId={membershipData.user.id}
-              //         existingSound={existingSound}
-              //         refetch={refetchInternal}
-              //       />
-              //       {userSound?.isApproved ? 'Approved' : userSound?.isRejected ? 'Rejected' : 'Pending'}
-              //     </div>
-              //   ) : null}
-              // </div>
             )
           })}
         </div>

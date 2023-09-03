@@ -24,10 +24,12 @@ export default function SoundPlayer({
   src,
   volume = 1,
   onVolumeChange,
+  hideVolume = false,
 }: {
   src?: string
   volume?: number
   onVolumeChange: (newVolume: number) => void
+  hideVolume?: boolean
 }) {
   const ref = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -96,24 +98,26 @@ export default function SoundPlayer({
           Your browser does not support the audio element.
         </audio>
       </div>
-      <div className="flex flex-row gap-2 justify-center items-center pl-3">
-        <FaVolumeUp className="text-orange-500 text-2xl" />
-        <input
-          type="range"
-          min="0"
-          max="4"
-          step="0.01"
-          value={volume?.toString()}
-          className="w-full"
-          onChange={(e) => {
-            const newVolume = Number(e.target.value)
-            if (ref.current && audio) {
-              audio.gain.gain.value = newVolume
-            }
-            onVolumeChange(newVolume)
-          }}
-        />
-      </div>
+      {hideVolume ? null : (
+        <div className="flex flex-row gap-2 justify-center items-center pl-3">
+          <FaVolumeUp className="text-orange-500 text-2xl" />
+          <input
+            type="range"
+            min="0"
+            max="4"
+            step="0.01"
+            value={volume?.toString()}
+            className="w-full"
+            onChange={(e) => {
+              const newVolume = Number(e.target.value)
+              if (ref.current && audio) {
+                audio.gain.gain.value = newVolume
+              }
+              onVolumeChange(newVolume)
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
