@@ -83,11 +83,12 @@ export default function TwitchUserSearch({
   patreonId: string
   existing?: { label: string; username: string; image: string; value: number }
 }) {
+  const existingItem = existing && Object.values(existing).filter(Boolean).length > 0
   return (
     <div className="w-full md:w-1/2">
       <AsyncSelect
         styles={stylesConfig}
-        placeholder={existing ? <TwitchUserOptionInner data={existing} /> : 'Search for Twitch user....'}
+        placeholder={existingItem ? <TwitchUserOptionInner data={existing} /> : 'Search for Twitch user....'}
         components={selectComponents}
         onChange={async (d: { label: string; image: string; username: string; value: string }) => {
           try {
