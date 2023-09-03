@@ -96,13 +96,33 @@ export const campaigns = {
     await dbConnect()
     const campaign = await CampaignModel.findOne(
       { patreonCampaignId },
-      { patreonCampaignId: 1, sounds: 1, entitledCriteria: 1, entitlements: 1 }
+      {
+        patreonCampaignId: 1,
+        sounds: 1,
+        entitledCriteria: 1,
+        entitlements: 1,
+        twitchAccessToken: 1,
+        twitchRefreshToken: 1,
+      }
     ).lean()
     const connections = await ConnectionModel.find(
       { 'patreon.id': { $in: Object.keys(campaign?.sounds || {}) } },
       { patreon: 1, twitch: 1 }
     ).lean()
     return { campaign, connections }
+  },
+  /**
+   * Associate twitch tokens with campaigns
+   */
+  updateCampaignTwitchTokens: async (patreonId: string, twitchAccessToken: string, twitchRefreshToken: string) => {
+    await dbConnect()
+    await CampaignModel.updateMany(
+      { ownerPatreonId: patreonId },
+      {
+        twitchAccessToken,
+        twitchRefreshToken,
+      }
+    )
   },
   /**
    * When a creator enables for a campaign

@@ -1,7 +1,7 @@
 import { unstable_getServerSession } from 'next-auth'
 import fetch from 'isomorphic-fetch'
 import { authOptions } from '../[...nextauth]'
-import { connection } from '~/api'
+import { campaigns, connection } from '~/api'
 
 export default async function (req, res) {
   const session = await unstable_getServerSession(req, res, authOptions)
@@ -10,12 +10,15 @@ export default async function (req, res) {
   const token = result.access_token
   const info = await getInfo(token)
   const twitchUser = (info?.data || [])[0]
-  await connection.createConnection((session as any)?.uid, {
-    id: twitchUser?.id,
-    username: twitchUser?.login,
-    image: twitchUser?.profile_image_url,
-    displayName: twitchUser?.display_name,
-  })
+  await Promise.all([
+    connection.createConnection((session as any)?.uid, {
+      id: twitchUser?.id,
+      username: twitchUser?.login,
+      image: twitchUser?.profile_image_url,
+      displayName: twitchUser?.display_name,
+    }),
+    campaigns.updateCampaignTwitchTokens((session as any)?.uid, result.access_token, result.refresh_token),
+  ])
   res.redirect(307, '/')
 }
 

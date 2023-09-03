@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from 'react-query'
 import tmi from 'tmi.js'
+import useTwitchToken from '~/components/hooks/useTwitchToken'
 
 function makeAudio(target: HTMLAudioElement, audio?: any, volume?: number) {
   if (audio) {
@@ -26,6 +27,7 @@ export default function Alert() {
     query: { id, twitch },
   } = useRouter()
   console.info('[mount]', { id, twitch })
+  const [campaignTwitchTokens, setCampaignTwitchTokens] = useState({ accessToken: '', refreshToken: '' })
   const { data } = useQuery(['alerts', id], {
     refetchInterval: 60_000,
     refetchIntervalInBackground: true,
@@ -37,6 +39,10 @@ export default function Alert() {
         .then((data) => {
           console.info('[fetch]', data)
           const criteriaCents = data?.campaign?.entitledCriteria?.amountCents
+          setCampaignTwitchTokens({
+            accessToken: data?.campaign?.twitchAccessToken,
+            refreshToken: data?.campaign?.twitchRefreshToken,
+          })
           return new Map<string, any>(
             data.connections
               .map((c) => {
@@ -45,7 +51,7 @@ export default function Alert() {
                 const entitlement = (data?.campaign?.entitlements || {})[c.patreon.id] || {}
                 if (
                   (entitlement.currentlyEntitledAmountsCents || 0) < criteriaCents &&
-                  !c.patreon.id.startsWith('custom-')
+                  !c?.patreon?.id?.startsWith('custom-')
                 )
                   return
                 return [
@@ -66,36 +72,62 @@ export default function Alert() {
     | undefined
   >()
   console.info('[loaded]', { count: data?.size, data })
+  const token = useTwitchToken(id?.toString(), campaignTwitchTokens)
   useEffect(() => {
     console.info('[connect]', { twitch })
-    const client = new tmi.Client({ channels: [twitch] })
+    const client = new tmi.Client({
+      channels: [twitch],
+      ...(token
+        ? {
+            identity: {
+              username: twitch,
+              password: `oauth:${token}`,
+            },
+          }
+        : {}),
+      options: { updateEmotesetsTimer: 0, skipUpdatingEmotesets: true },
+    })
 
     if (ref.current) setAudio(makeAudio(ref.current, audio))
 
-    client.connect()
+    client.on('connected', () => console.info('[connected]', client.readyState()))
 
     client.on('message', (_channel, tags) => {
       const userId = tags['user-id']
       const sound = data?.get(userId)
-      if (ref.current && sound.sound && !seenList.current.has(userId)) {
+
+      if (ref.current && sound?.sound && !seenList.current.has(userId)) {
         console.info('[playing]', { userId, displayName: tags['display-name'], sound, audio })
         if (audio) {
           console.info('[audio:volume]', sound.volume)
           audio.gain.gain.value = sound.volume || 1
         }
         seenList.current.add(userId)
-        ref.current.src = sound.sound
+        ref.current.src = sound?.sound
         ref.current.pause()
         ref.current.currentTime = 0
         ref.current.load()
-        ref.current.play()
+        try {
+          ref.current.play()
+        } catch (e) {
+          console.error('[play:error]', e)
+        }
+        try {
+          if (token) {
+            client?.say(twitch, `Roll out the red carpet, ${tags['display-name']} is here!`)
+          }
+        } catch (e) {
+          console.error('[say:error]', e)
+        }
       }
     })
+
+    client.connect()
 
     return () => {
       client.disconnect()
     }
-  }, [data, twitch, audio, setAudio])
+  }, [data, twitch, audio, setAudio, token])
 
   return (
     <>
