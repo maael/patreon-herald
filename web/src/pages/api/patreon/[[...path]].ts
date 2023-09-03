@@ -7,7 +7,7 @@ function getPath(pathParts) {
     return `/api/current_user/campaigns?include=rewards,creator`
   } else if (pathParts[0] === 'memberships') {
     return `/v2/identity?include=memberships,campaign,memberships.campaign,memberships.campaign.creator&${encodeURI(
-      'fields[user]=full_name,thumb_url&fields[member]=currently_entitled_amount_cents,full_name,patron_status&fields[campaign]=creation_name,image_small_url,image_url,summary'
+      'fields[user]=full_name,thumb_url&fields[member]=currently_entitled_amount_cents,full_name,patron_status&fields[campaign]=vanity,creation_name,image_small_url,image_url,summary'
     )}`
   } else {
     return undefined

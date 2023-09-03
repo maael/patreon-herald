@@ -82,7 +82,7 @@ export default function Index() {
                 />
                 <div>
                   <h2 className="text-bold text-2xl flex flex-row gap-1 items-center">
-                    {m.campaign.creator.full_name}
+                    {m?.campaign?.vanity}
                     {internalCampaigns?.campaigns === undefined ? (
                       <FaSpinner className="animate animate-spin text-sm" />
                     ) : internalCampaigns.campaigns?.has(m.campaign.id) ? (
