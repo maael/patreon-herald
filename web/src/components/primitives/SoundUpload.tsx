@@ -37,6 +37,7 @@ export default function SoundUpload({
       'audio/ogg': [],
       'audio/mp3': [],
       'audio/wav': [],
+      'audio/mpeg': [],
     },
     onFileDialogOpen: () => {
       setIsLoading(true)
