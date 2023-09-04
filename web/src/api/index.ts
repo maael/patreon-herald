@@ -58,6 +58,15 @@ export const connection = {
 
 export const campaigns = {
   /**
+   * Update tokens
+   */
+  updateTokens: async (oldRefreshToken: string, newAuthToken: string, newRefreshToken: string) => {
+    const update: Partial<Campaign> = {}
+    if (newAuthToken) update.twitchAccessToken = newAuthToken
+    if (newRefreshToken) update.twitchRefreshToken = newRefreshToken
+    await CampaignModel.updateOne({ twitchRefreshToken: oldRefreshToken }, update)
+  },
+  /**
    * Get campaign patreon webhook IDs for refreshing
    */
   getCampaignWebhooksById: async (id: string) => {

@@ -1,7 +1,8 @@
 import fetch from 'isomorphic-fetch'
+import { campaigns } from '~/api'
 
 export default async function (req, res) {
-  const currentRefreshToken = req.headers['X-twitch-refresh-token'] || req.query.token?.toString()
+  const currentRefreshToken = req.headers['x-twitch-refresh-token'] || req.query.token?.toString()
   const result = await fetch('https://id.twitch.tv/oauth2/token', {
     method: 'POST',
     headers: {
@@ -14,6 +15,7 @@ export default async function (req, res) {
   const data = await result.json()
   if (result.status === 200) {
     // update and return
+    await campaigns.updateTokens(currentRefreshToken, data.access_token, data.refresh_token)
     console.info('[refresh]', 'Refreshed')
     res.json({ ok: 1, token: data.access_token })
   } else {
