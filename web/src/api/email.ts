@@ -16,18 +16,20 @@ const storedMessages: Record<EmailType, MessageData> = {
   [EmailType.NewSound]: {
     subject: 'Patreon Herald - New sound to review',
     text: 'Hello %PATREON_NAME%! You have a new sound to review! Review it at %CAMPAIGN_ID%.',
-    html: 'Hello %PATREON_NAME%!<br/>You have a new sound to review!<br/>Review it <a href="https://patreon-herald.mael.tech/creator#%CAMPAIGN_ID%">here.</a>',
+    html: 'Hello %PATREON_NAME%!<br/>You have a new sound to review!<br/>Review it <a href="https://patreon-herald.mael.tech/creator?c=%CAMPAIGN_ID%&p=%PATREON_ID%">here.</a>',
   },
 }
 
 interface Metadata {
   campaignId?: string
+  patreonId?: string
 }
 
 function replace(type: EmailType, key: keyof MessageData, metadata: Metadata & Pick<Connection, 'patreon'>) {
   return storedMessages[type][key]
     .replace('%PATREON_NAME%', metadata?.patreon?.username || '')
     .replace('%CAMPAIGN_ID%', metadata?.campaignId || '')
+    .replace('%PATREON_ID%', metadata?.patreonId || '')
 }
 
 export async function sendEmail(type: EmailType, ownerId?: string, metadata: Metadata = {}) {
@@ -36,6 +38,7 @@ export async function sendEmail(type: EmailType, ownerId?: string, metadata: Met
     if (!account || !account.patreon) return
     const msgMetadata = {
       campaignId: metadata?.campaignId,
+      patreonId: metadata?.patreonId,
       ...account,
     }
     const msg = {

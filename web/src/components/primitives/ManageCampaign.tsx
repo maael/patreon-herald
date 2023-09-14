@@ -7,6 +7,8 @@ import { v4 as uuid } from 'uuid'
 import SoundUpload from './SoundUpload'
 import { PatreonUserLabel } from './PlatformUserLabel'
 import TwitchUserSearch from './TwitchUserSearch'
+import useScrollToIdOnLoad from '../hooks/useScrollToIdOnLoad'
+import { useRouter } from 'next/router'
 
 export default function ManageCampaign({
   campaign,
@@ -109,6 +111,21 @@ export default function ManageCampaign({
     },
   })
 
+  const { membersForReview, otherMembers } = useMemo(() => {
+    return filteredMembersData.reduce((acc, member) => {
+
+      const sound = campaignSounds.get(member.user.id) as any
+      const isForReview = sound !== undefined && !sound.isApproved && !sound.isRejected
+      acc[isForReview ? 'membersForReview' : 'otherMembers'].push(member)
+      return acc
+    }, {
+      membersForReview: [],
+      otherMembers: [],
+    })
+  }, [campaignSounds, filteredMembersData])
+
+  useScrollToIdOnLoad(otherMembers.length > 0)
+
   return (
     <div className="flex flex-col gap-2 justify-center items-center bg-white border-gray-200 border-l border-r border-b rounded-b-lg mx-2 md:mx-5 relative -top-2 px-5 pt-5 pb-4 drop-shadow-lg">
       <div className="flex flex-row gap-1 justify-between items-center w-full">
@@ -187,117 +204,163 @@ export default function ManageCampaign({
         {filteredMembersData?.length || 0} Pledge{filteredMembersData?.length === 1 ? '' : 's'}
       </h2>
       <div className="flex flex-col gap-2 w-full">
-        {filteredMembersData?.map((pledge) => {
-          const sound = campaignSounds.get(pledge.user.id) as any
-          const entitledTiers = (pledge?.tiers || []).map((t) => t.title).join(', ')
-          return (
-            <div
-              key={pledge.user.id}
-              className={classNames('flex flex-col gap-2 items-center w-full pt-4 pl-4 pr-4 pb-2 rounded-lg border', {
-                'bg-green-100 border-green-200': sound?.isApproved,
-                'bg-red-100 border-red-200': sound?.isRejected,
-                'bg-gray-100 border-gray-300': !sound?.isApproved && !sound?.isRejected,
-              })}
-            >
-              <div className="flex md:flex-row flex-col justify-center items-center gap-2 w-full">
-                <div className="flex-1 flex items-center gap-3 md:gap-2 mb-2 flex-col md:flex-row w-full md:w-auto relative">
-                  <PatreonUserLabel image={pledge.user.thumb_url} name={pledge.user.full_name} />
-                  <TwitchUserSearch
-                    patreonId={pledge.user.id}
-                    existing={
-                      pledge.user.twitch
-                        ? {
-                            username: pledge.user.twitch.username,
-                            image: pledge.user.twitch.image,
-                            label: pledge.user.twitch.displayName,
-                            value: pledge.user.twitch.id,
-                          }
-                        : undefined
-                    }
-                  />
-                  <div className="flex-1"></div>
-                  {pledge.user.id.startsWith('custom-') ? (
-                    <button
-                      className="py-2 px-3 text-xs bg-red-600 absolute top-0 right-0"
-                      title="Delete custom user"
-                      onClick={() => deleteUser(pledge.user.id)}
-                      disabled={isDeletingUser}
-                    >
-                      {isDeletingUser ? <FaSpinner className="animate animate-spin" /> : <FaTrash />}
-                    </button>
-                  ) : null}
-                </div>
-                {entitledTiers ? (
-                  <div>
-                    <span className="font-bold">Entitled Tiers:</span> {entitledTiers}
-                  </div>
-                ) : null}
-              </div>
-              <div className="flex flex-col md:flex-row justify-between items-center gap-2 w-full">
-                <div className="flex flex-row justify-center md:justify-start items-center gap-2 w-full">
-                  {sound ? (
-                    <>
-                      <div>
-                        <button
-                          className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
-                          onClick={async () => {
-                            try {
-                              await fetch(
-                                `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                                {
-                                  method: 'PATCH',
-                                }
-                              )
-                              toast.success('Approved')
-                              refetch()
-                            } catch (e) {
-                              console.error('[approve:error]', e)
-                              toast.error('Error, please try again')
-                            }
-                          }}
-                        >
-                          <FaCheck />
-                          {sound?.isApproved ? 'Approved' : 'Approve'}
-                        </button>
-                      </div>
-                      <div>
-                        <button
-                          className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
-                          onClick={async () => {
-                            try {
-                              await fetch(
-                                `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
-                                {
-                                  method: 'DELETE',
-                                }
-                              )
-                              refetch()
-                              toast.success('Rejected')
-                            } catch (e) {
-                              console.error('[reject:error]', e)
-                              toast.error('Error, please try again')
-                            }
-                          }}
-                        >
-                          <FaTimes />
-                          {sound?.isRejected ? 'Rejected' : 'Reject'}
-                        </button>
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-                <SoundUpload
-                  campaignId={internalCampaign?.patreonCampaignId}
-                  patronId={pledge?.user?.id}
-                  existingSound={sound?.sound ? `https://files.mael-cdn.com${sound.sound}` : undefined}
-                  existingVolume={sound?.volume}
-                  autoApprove
+        {membersForReview?.length > 0 ? (
+          <>
+            <h3 className="font-bold text-center">
+              {membersForReview?.length || 0} pledge{membersForReview?.length === 1 ? '' : 's'} for review
+            </h3>
+            {membersForReview?.map((pledge) => {
+              return (
+                <MemberItem
+                  key={pledge.user.id}
+                  campaignSounds={campaignSounds}
+                  pledge={pledge}
+                  deleteUser={deleteUser}
+                  isDeletingUser={isDeletingUser}
+                  internalCampaign={internalCampaign}
                   refetch={refetch}
                 />
-              </div>
-            </div>
+              )
+            })}
+            <h3 className="font-bold text-center">
+              {otherMembers?.length || 0} {membersForReview?.length > 0 ? 'other' : ''} pledge{otherMembers?.length === 1 ? '' : 's'}
+            </h3>
+          </>) : null}
+        {otherMembers?.map((pledge) => {
+          return (
+            <MemberItem
+              key={pledge.user.id}
+              campaignSounds={campaignSounds}
+              pledge={pledge}
+              deleteUser={deleteUser}
+              isDeletingUser={isDeletingUser}
+              internalCampaign={internalCampaign}
+              refetch={refetch}
+            />
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+function MemberItem({ campaignSounds, pledge, deleteUser, isDeletingUser, internalCampaign, refetch }: {
+  campaignSounds: Map<string, any>,
+  pledge: any,
+  deleteUser: (id: string) => void,
+  isDeletingUser: boolean,
+  internalCampaign?: any,
+  refetch: () => void
+}) {
+  const {query} = useRouter()
+  const sound = campaignSounds.get(pledge.user.id) as any
+  const entitledTiers = (pledge?.tiers || []).map((t) => t.title).join(', ')
+  const highlighted = query?.p === pledge?.user?.id
+  return (
+    <div
+      id={`pledge-${pledge?.user.id}`}
+      className={classNames('flex flex-col gap-2 items-center w-full pt-4 pl-4 pr-4 pb-2 rounded-lg border', {
+        'bg-green-100 border-green-200': sound?.isApproved,
+        'bg-red-100 border-red-200': sound?.isRejected,
+        'bg-gray-100 border-gray-300': !sound?.isApproved && !sound?.isRejected,
+        'ring-2 ring-offset-2 ring-yellow-400': highlighted
+      })}
+    >
+      <div className="flex md:flex-row flex-col justify-center items-center gap-2 w-full">
+        <div className="flex-1 flex items-center gap-3 md:gap-2 mb-2 flex-col md:flex-row w-full md:w-auto relative">
+          <PatreonUserLabel image={pledge.user.thumb_url} name={pledge.user.full_name} />
+          <TwitchUserSearch
+            patreonId={pledge.user.id}
+            existing={
+              pledge.user.twitch
+                ? {
+                  username: pledge.user.twitch.username,
+                  image: pledge.user.twitch.image,
+                  label: pledge.user.twitch.displayName,
+                  value: pledge.user.twitch.id,
+                }
+                : undefined
+            }
+          />
+          <div className="flex-1"></div>
+          {pledge.user.id.startsWith('custom-') ? (
+            <button
+              className="py-2 px-3 text-xs bg-red-600 absolute top-0 right-0"
+              title="Delete custom user"
+              onClick={() => deleteUser(pledge.user.id)}
+              disabled={isDeletingUser}
+            >
+              {isDeletingUser ? <FaSpinner className="animate animate-spin" /> : <FaTrash />}
+            </button>
+          ) : null}
+        </div>
+        {entitledTiers ? (
+          <div>
+            <span className="font-bold">Entitled Tiers:</span> {entitledTiers}
+          </div>
+        ) : null}
+      </div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-2 w-full">
+        <div className="flex flex-row justify-center md:justify-start items-center gap-2 w-full">
+          {sound ? (
+            <>
+              <div>
+                <button
+                  className={classNames('bg-green-600', { 'bg-opacity-50': sound?.isRejected })}
+                  onClick={async () => {
+                    try {
+                      await fetch(
+                        `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                        {
+                          method: 'PATCH',
+                        }
+                      )
+                      toast.success('Approved')
+                      refetch()
+                    } catch (e) {
+                      console.error('[approve:error]', e)
+                      toast.error('Error, please try again')
+                    }
+                  }}
+                >
+                  <FaCheck />
+                  {sound?.isApproved ? 'Approved' : 'Approve'}
+                </button>
+              </div>
+              <div>
+                <button
+                  className={classNames('bg-red-600', { 'bg-opacity-50': sound?.isApproved })}
+                  onClick={async () => {
+                    try {
+                      await fetch(
+                        `/api/internal/campaign/${internalCampaign?.patreonCampaignId}/${pledge?.user?.id}/approve`,
+                        {
+                          method: 'DELETE',
+                        }
+                      )
+                      refetch()
+                      toast.success('Rejected')
+                    } catch (e) {
+                      console.error('[reject:error]', e)
+                      toast.error('Error, please try again')
+                    }
+                  }}
+                >
+                  <FaTimes />
+                  {sound?.isRejected ? 'Rejected' : 'Reject'}
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+        <SoundUpload
+          campaignId={internalCampaign?.patreonCampaignId}
+          patronId={pledge?.user?.id}
+          existingSound={sound?.sound ? `https://files.mael-cdn.com${sound.sound}` : undefined}
+          existingVolume={sound?.volume}
+          autoApprove
+          refetch={refetch}
+        />
       </div>
     </div>
   )

@@ -188,7 +188,10 @@ export const campaigns = {
       { $set: { [`sounds.${patronId}`]: { ...sound, isApproved: !!autoApprove, isRejected: false } } }
     )
     if (!autoApprove) {
-      await sendEmail(EmailType.NewSound, existing?.ownerPatreonId, { campaignId: patreonCampaignId })
+      await sendEmail(EmailType.NewSound, existing?.ownerPatreonId, { 
+        campaignId: patreonCampaignId, 
+        patreonId: patronId 
+      })
     }
     return result
   },

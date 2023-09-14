@@ -51,14 +51,13 @@ export default function CreatorManage() {
     }
   )
   const [managing, setManaging] = React.useState<undefined | string>()
-  const { asPath } = useRouter()
+  const { query } = useRouter()
   React.useEffect(() => {
-    setManaging(asPath.split('#')[1])
-  }, [asPath])
+    if (query?.c) setManaging(query.c.toString())
+  }, [query])
   React.useEffect(() => {
     if (campaignData?.data && campaignData?.data.length === 1) {
       const campaign = campaignData?.data[0]
-      window.location.hash = campaign.id
       setManaging(campaign.id)
     }
   }, [campaignData?.data])
