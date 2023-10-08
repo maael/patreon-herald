@@ -26,6 +26,13 @@ export const connection = {
     return ConnectionModel.findOneAndUpdate({ 'patreon.id': patreonId }, { twitch }, { upsert: true }).lean()
   },
   /**
+   * Disassociates twitch account to patreon account
+   */
+  deleteConnection: async (patreonId: string) => {
+    await dbConnect()
+    return ConnectionModel.findOneAndUpdate({ 'patreon.id': patreonId }, { $unset: { twitch: 1 } }, {}).lean()
+  },
+  /**
    * Gets associated twitch details for patreon account, if any
    * Used during jwt/session creation
    */
@@ -188,9 +195,9 @@ export const campaigns = {
       { $set: { [`sounds.${patronId}`]: { ...sound, isApproved: !!autoApprove, isRejected: false } } }
     )
     if (!autoApprove) {
-      await sendEmail(EmailType.NewSound, existing?.ownerPatreonId, { 
-        campaignId: patreonCampaignId, 
-        patreonId: patronId 
+      await sendEmail(EmailType.NewSound, existing?.ownerPatreonId, {
+        campaignId: patreonCampaignId,
+        patreonId: patronId,
       })
     }
     return result

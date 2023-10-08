@@ -40,7 +40,7 @@ export default function Header() {
         <div className="flex-1" />
         {session?.status === 'authenticated' ? (
           <div className="flex flex-row gap-5 sm:gap-8 justify-center items-center mx-5 sm:mx-5 text-white">
-            <Twitch />
+            <Twitch canRemove />
             <Patreon image={session?.data?.user?.image} name={session?.data?.user?.name} />
           </div>
         ) : null}

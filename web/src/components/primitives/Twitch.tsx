@@ -1,13 +1,29 @@
 /* eslint-disable @next/next/no-img-element */
 import { signIn, useSession } from 'next-auth/react'
-import { FaQuestion, FaTwitch } from 'react-icons/fa'
+import { FaQuestion, FaTimes, FaTwitch } from 'react-icons/fa'
+import cls from 'classnames'
 
-export default function Twitch() {
+export default function Twitch({ canRemove }: { canRemove?: boolean }) {
   const session = useSession() as any
+  const isRemovable = canRemove && session?.data?.twitch
   return (
-    <div className="text-center flex flex-row gap-1 justify-center items-center">
+    <div className="text-center flex flex-row gap-1 justify-center items-center group">
       <TwitchPrompt />
-      <div className="flex flex-row gap-3.5 justify-center items-center">
+      <div
+        className={cls('flex flex-row gap-3.5 justify-center items-center', { 'cursor-pointer': isRemovable })}
+        onClick={async () => {
+          if (!isRemovable) return
+          const result = await fetch(`/api/internal/connection/${session?.data?.uid}`, {
+            method: 'DELETE',
+          })
+          if (result.ok) {
+            window.location.reload()
+          } else {
+            console.error('[error] Failed to remove twitch account')
+          }
+        }}
+        title={isRemovable ? 'Remove Twitch account' : undefined}
+      >
         <div className="relative">
           {session?.data?.twitch?.image ? (
             <img
@@ -20,6 +36,11 @@ export default function Twitch() {
               <FaQuestion />
             </div>
           )}
+          {isRemovable ? (
+            <div className="absolute top-0 left-0 w-10 aspect-square rounded-full shadow border-2 bg-red-200 border-red-600 text-red-600 justify-center items-center hidden group-hover:flex">
+              <FaTimes />
+            </div>
+          ) : null}
           <div className="bg-white text-purple-600 text-xs p-1.5 rounded-full absolute -right-2 -bottom-2 shadow border-1">
             <FaTwitch />
           </div>

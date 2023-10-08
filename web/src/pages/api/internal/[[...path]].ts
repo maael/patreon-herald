@@ -175,6 +175,20 @@ const internalApi: { [k: string]: NextApiHandler } = {
       res.status(500).json({ succes: false, error: e.message })
     }
   },
+  /**
+   * DELETE /internal/connection/:patreonUserId
+   */
+  deleteConnection: async (req, res) => {
+    try {
+      const pathParts = req.query.path || []
+      const patreonUserId = pathParts[1]
+      await connection.deleteConnection(patreonUserId)
+      res.json({ success: true })
+    } catch (e) {
+      console.error('[deleteConnection]', e)
+      res.status(500).json({ succes: false, error: e.message })
+    }
+  },
 }
 
 const handler: NextApiHandler = async (req, res) => {
@@ -211,6 +225,8 @@ const handler: NextApiHandler = async (req, res) => {
       await internalApi.twitch(req, res)
     } else if (pathParts[0] === 'connection' && method === 'PUT') {
       await internalApi.upsertConnection(req, res)
+    } else if (pathParts[0] === 'connection' && method === 'DELETE') {
+      await internalApi.deleteConnection(req, res)
     } else {
       res.json({ ok: 1, error: 'Missing endpoint', pathParts, method })
     }

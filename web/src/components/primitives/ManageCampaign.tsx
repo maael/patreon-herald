@@ -66,7 +66,9 @@ export default function ManageCampaign({
       .filter(Boolean)
   }, [membersData, rewards, tier, internalCampaign?.customUsers])
 
-  const campaignSounds = new Map(Object.entries(internalCampaign?.sounds || {}))
+  const campaignSounds = useMemo(() => {
+    return new Map(Object.entries(internalCampaign?.sounds || {}))
+  }, [internalCampaign?.sounds])
 
   const { mutate: addUser, isLoading: isAddingUser } = useMutation({
     mutationKey: ['new-custom-user', internalCampaign?._id],
@@ -112,16 +114,18 @@ export default function ManageCampaign({
   })
 
   const { membersForReview, otherMembers } = useMemo(() => {
-    return filteredMembersData.reduce((acc, member) => {
-
-      const sound = campaignSounds.get(member.user.id) as any
-      const isForReview = sound !== undefined && !sound.isApproved && !sound.isRejected
-      acc[isForReview ? 'membersForReview' : 'otherMembers'].push(member)
-      return acc
-    }, {
-      membersForReview: [],
-      otherMembers: [],
-    })
+    return filteredMembersData.reduce(
+      (acc, member) => {
+        const sound = campaignSounds.get(member.user.id) as any
+        const isForReview = sound !== undefined && !sound.isApproved && !sound.isRejected
+        acc[isForReview ? 'membersForReview' : 'otherMembers'].push(member)
+        return acc
+      },
+      {
+        membersForReview: [],
+        otherMembers: [],
+      }
+    )
   }, [campaignSounds, filteredMembersData])
 
   useScrollToIdOnLoad(otherMembers.length > 0)
@@ -223,9 +227,11 @@ export default function ManageCampaign({
               )
             })}
             <h3 className="font-bold text-center">
-              {otherMembers?.length || 0} {membersForReview?.length > 0 ? 'other' : ''} pledge{otherMembers?.length === 1 ? '' : 's'}
+              {otherMembers?.length || 0} {membersForReview?.length > 0 ? 'other' : ''} pledge
+              {otherMembers?.length === 1 ? '' : 's'}
             </h3>
-          </>) : null}
+          </>
+        ) : null}
         {otherMembers?.map((pledge) => {
           return (
             <MemberItem
@@ -244,15 +250,22 @@ export default function ManageCampaign({
   )
 }
 
-function MemberItem({ campaignSounds, pledge, deleteUser, isDeletingUser, internalCampaign, refetch }: {
-  campaignSounds: Map<string, any>,
-  pledge: any,
-  deleteUser: (id: string) => void,
-  isDeletingUser: boolean,
-  internalCampaign?: any,
+function MemberItem({
+  campaignSounds,
+  pledge,
+  deleteUser,
+  isDeletingUser,
+  internalCampaign,
+  refetch,
+}: {
+  campaignSounds: Map<string, any>
+  pledge: any
+  deleteUser: (id: string) => void
+  isDeletingUser: boolean
+  internalCampaign?: any
   refetch: () => void
 }) {
-  const {query} = useRouter()
+  const { query } = useRouter()
   const sound = campaignSounds.get(pledge.user.id) as any
   const entitledTiers = (pledge?.tiers || []).map((t) => t.title).join(', ')
   const highlighted = query?.p === pledge?.user?.id
@@ -263,7 +276,7 @@ function MemberItem({ campaignSounds, pledge, deleteUser, isDeletingUser, intern
         'bg-green-100 border-green-200': sound?.isApproved,
         'bg-red-100 border-red-200': sound?.isRejected,
         'bg-gray-100 border-gray-300': !sound?.isApproved && !sound?.isRejected,
-        'ring-2 ring-offset-2 ring-yellow-400': highlighted
+        'ring-2 ring-offset-2 ring-yellow-400': highlighted,
       })}
     >
       <div className="flex md:flex-row flex-col justify-center items-center gap-2 w-full">
@@ -274,11 +287,11 @@ function MemberItem({ campaignSounds, pledge, deleteUser, isDeletingUser, intern
             existing={
               pledge.user.twitch
                 ? {
-                  username: pledge.user.twitch.username,
-                  image: pledge.user.twitch.image,
-                  label: pledge.user.twitch.displayName,
-                  value: pledge.user.twitch.id,
-                }
+                    username: pledge.user.twitch.username,
+                    image: pledge.user.twitch.image,
+                    label: pledge.user.twitch.displayName,
+                    value: pledge.user.twitch.id,
+                  }
                 : undefined
             }
           />
