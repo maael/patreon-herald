@@ -35,7 +35,7 @@ export default function Index() {
             <p className="text-lg">Say hi, and recognise their support!</p>
           </div>
         </div>
-        <div className="flex-1 md:px-10 flex gap-4 flex-col items-center">
+        <div className="flex-1 px-2 md:px-10 flex gap-4 flex-col items-center">
           <h5 className="text-4xl mb-1">Take out the manual steps and tools</h5>
           <ol className="list-decimal text-left text-xl gap-2 flex flex-col">
             <li>Log in with your Patreon, set up your campaign settings, with what tiers to allow sounds for</li>
