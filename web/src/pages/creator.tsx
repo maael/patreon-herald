@@ -64,7 +64,7 @@ export default function CreatorManage() {
   }, [campaignData?.data])
   return (
     <>
-      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
+      <Banner>
         <h1 className="text-6xl font-bold font-badscript px-4 sm:px-20">Creator</h1>
       </Banner>
       <div className="max-w-3xl flex flex-col gap-2 mx-auto px-2 pt-5 pb-10 w-full">

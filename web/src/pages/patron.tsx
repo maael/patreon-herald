@@ -47,7 +47,7 @@ export default function Index() {
   })
   return (
     <>
-      <Banner iconCount={8} className="grid-cols-8 md:grid-cols-8 h-36">
+      <Banner>
         <h1 className="text-6xl font-bold font-badscript px-4 sm:px-28">Patron</h1>
       </Banner>
       <div className="py-5 max-w-3xl mx-auto flex flex-col gap-2 w-full px-2">

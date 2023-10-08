@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { Toaster } from 'react-hot-toast'
 import useFathom from '~/components/hooks/useFathom'
 import SEO from '~/../next-seo.config'
-import EmojiFavicon from '~/components/primitives/EmojiFavicon'
 import Header from '~/components/primitives/Header'
 
 const queryClient = new QueryClient({
@@ -24,12 +23,12 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="theme-color" content="#fd015d" />
+          <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
         </Head>
         <DefaultSeo {...SEO} />
         <Header />
         <Component {...pageProps} />
         <Toaster position="bottom-center" />
-        <EmojiFavicon emoji="🎺" />
       </SessionProvider>
     </QueryClientProvider>
   )

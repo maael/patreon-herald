@@ -15,7 +15,7 @@ export default function Index() {
   }, [session.status, router])
   return (
     <>
-      <Banner className="h-1/3">
+      <Banner>
         <h1 className="text-6xl font-bold font-badscript drop-shadow-lg">Patreon Herald</h1>
         <p className="text-2xl font-bold drop-shadow-lg">Time to roll out the carpet</p>
       </Banner>
@@ -100,7 +100,7 @@ function ChatItem({
 function CtaButton() {
   return (
     <button onClick={() => signIn('patreon')} className="font-badscript text-3xl py-5">
-      <GiTrumpetFlag className="text-orange-500 mr-2" /> Get started now{' '}
+      <GiTrumpetFlag className="text-orange-500 mr-2 transform -scale-x-100" /> Get started now{' '}
       <GiTrumpetFlag className="text-orange-500 ml-2" />
     </button>
   )

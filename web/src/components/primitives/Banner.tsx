@@ -1,30 +1,33 @@
 import { PropsWithChildren } from 'react'
-import cls from 'classnames'
 import TrumpetSvg from './TrumpetSvg'
 
-export default function Banner({
-  children,
-  iconCount = 24,
-  className,
-}: PropsWithChildren<{ iconCount?: number; className?: string }>) {
+const iconSize = '8vmin'
+
+export default function Banner({ children }: PropsWithChildren<{}>) {
   return (
-    <div
-      className={cls(
-        'bg-orange-400 grid grid-cols-8 md:grid-cols-8 justify-center items-center relative drop-shadow-xl',
-        className
-      )}
-    >
-      {Array.from({ length: iconCount }).map((_, i) => (
-        <div key={i} className="flex flex-1 justify-center items-center">
-          <TrumpetSvg width={'8vmin'} height={'8vmin'} className="fill-white drop-shadow" />
-        </div>
-      ))}
-      <div className="absolute inset-1">
-        <div className="flex justify-center items-center h-full">
-          <div className="bg-orange-400 text-white px-12 py-4 text-center flex flex-col justify-center items-center gap-3 bg-opacity-70">
-            {children}
-          </div>
-        </div>
+    <div className={'bg-orange-400 flex flex-row justify-center items-center relative drop-shadow-xl text-white'}>
+      <div className="flex-1 text-center flex flex-row justify-around items-center">
+        <TrumpetSvg
+          width={iconSize}
+          height={iconSize}
+          className="fill-white drop-shadow hidden sm:block transform -scale-x-100"
+        />
+        <TrumpetSvg
+          width={iconSize}
+          height={iconSize}
+          className="fill-white drop-shadow hidden lg:block transform -scale-x-100"
+        />
+        <TrumpetSvg
+          width={iconSize}
+          height={iconSize}
+          className="fill-white drop-shadow hidden xl:block transform -scale-x-100"
+        />
+      </div>
+      <div className="text-center py-2 sm:py-6">{children}</div>
+      <div className="flex-1 text-center flex flex-row justify-around items-center">
+        <TrumpetSvg width={iconSize} height={iconSize} className="fill-white drop-shadow hidden sm:block" />
+        <TrumpetSvg width={iconSize} height={iconSize} className="fill-white drop-shadow hidden lg:block" />
+        <TrumpetSvg width={iconSize} height={iconSize} className="fill-white drop-shadow hidden xl:block" />
       </div>
     </div>
   )

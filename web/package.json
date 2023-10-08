@@ -9,8 +9,7 @@
     "build": "next build",
     "start": "next start",
     "prettier": "prettier --ignore-path .gitignore --write .",
-    "lint": "eslint --ext .ts,.tsx --ignore-path .gitignore",
-    "generate-version-file": "node generate-version-file.js"
+    "lint": "eslint --ext .ts,.tsx --ignore-path .gitignore"
   },
   "husky": {
     "hooks": {
