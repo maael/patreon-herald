@@ -411,7 +411,7 @@ export const patreon = {
     try {
       do {
         const page = await patreon.getMembersPage(accessToken, campaignId, cursor)
-        console.info({ campaignId, cursor })
+        console.info('[getInitialMembers]', { accessToken, campaignId, cursor })
         const linkedUsers = new Map<string, any>(
           page.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
         )

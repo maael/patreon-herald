@@ -64,6 +64,8 @@ const handler: NextApiHandler = async (req, res) => {
         campaignId
       )
 
+      console.info(`[patreon] Found ${patreons.length} patreons`)
+
       const mappedEntitlements = patreons.reduce(
         (acc, p) => ({
           ...[acc],
@@ -75,9 +77,10 @@ const handler: NextApiHandler = async (req, res) => {
       )
 
       try {
+        console.info('[patreon] updating entitlements')
         await campaigns.upsertPatronCampaignEntitlements(campaignId, mappedEntitlements)
       } catch (e) {
-        console.info('failed to update entitlements', e)
+        console.info('[patreon] failed to update entitlements', e)
       }
 
       const patreonTwitchConnections = await connection.getTwitchConnectionsByPatreonIds(
