@@ -214,20 +214,30 @@ export const campaigns = {
    */
   approveSound: async (patreonCampaignId: string, patronId: string) => {
     await dbConnect()
-    return CampaignModel.updateOne(
-      { patreonCampaignId },
-      { $set: { [`sounds.${patronId}.isApproved`]: true, [`sounds.${patronId}.isRejected`]: false } }
-    )
+    const [result, email] = await Promise.all([
+      CampaignModel.updateOne(
+        { patreonCampaignId },
+        { $set: { [`sounds.${patronId}.isApproved`]: true, [`sounds.${patronId}.isRejected`]: false } }
+      ),
+      ConnectionModel.findOne({ 'patreon.id': patronId }, { patreon: 1 }).lean(),
+    ])
+    await sendEmail(EmailType.ApprovedSound, email, {})
+    return result
   },
   /**
    * Creator rejects a patreon sound
    */
   rejectSound: async (patreonCampaignId: string, patronId: string) => {
     await dbConnect()
-    return CampaignModel.updateOne(
-      { patreonCampaignId },
-      { $set: { [`sounds.${patronId}.isApproved`]: false, [`sounds.${patronId}.isRejected`]: true } }
-    )
+    const [result, email] = await Promise.all([
+      CampaignModel.updateOne(
+        { patreonCampaignId },
+        { $set: { [`sounds.${patronId}.isApproved`]: false, [`sounds.${patronId}.isRejected`]: true } }
+      ),
+      ConnectionModel.findOne({ 'patreon.id': patronId }, { patreon: 1 }).lean(),
+    ])
+    await sendEmail(EmailType.RejectedSound, email, {})
+    return result
   },
   /**
    * Creator sets volume for a patreon sound
