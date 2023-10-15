@@ -66,15 +66,12 @@ const handler: NextApiHandler = async (req, res) => {
 
       console.info(`[patreon] Found ${patreons.length} patreons`)
 
-      const mappedEntitlements = patreons.reduce(
-        (acc, p) => ({
-          ...[acc],
-          [`entitlements.${p.user.id}.currentlyEntitledAmountsCents`]: Math.max(...p.tiers.map((t) => t.amount_cents)),
-          [`entitlements.${p.user.id}.currentlyEntitledTiers`]: p.tiers.map((t) => t.id),
-          [`entitlements.${p.user.id}.lastUpdated`]: new Date().toISOString(),
-        }),
-        {}
-      )
+      const mappedEntitlements = patreons.reduce((acc, p) => {
+        acc[`entitlements.${p.user.id}.currentlyEntitledAmountsCents`] = Math.max(...p.tiers.map((t) => t.amount_cents))
+        acc[`entitlements.${p.user.id}.currentlyEntitledTiers`] = p.tiers.map((t) => t.id)
+        acc[`entitlements.${p.user.id}.lastUpdated`] = new Date().toISOString()
+        return acc
+      }, {})
 
       try {
         console.info('[patreon] updating entitlements')
