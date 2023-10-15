@@ -9,16 +9,17 @@ export const authOptions: AuthOptions = {
     PatreonProvider({
       clientId: process.env.PATREON_ID || '',
       clientSecret: process.env.PATREON_SECRET || '',
-      userinfo: {
-        url: `https://www.patreon.com/api/oauth2/v2/identity?${encodeURI(
-          'fields[user]=email,full_name,image_url,thumb_url'
-        )}`,
-      },
-      profile(profile) {
+      userinfo: `https://www.patreon.com/api/oauth2/v2/identity?include=campaign&${encodeURI(
+        'fields[user]=email,full_name,image_url,thumb_url'
+      )}&${encodeURI('fields[campaign]=vanity,url')}`,
+      async profile(profile) {
+        const campaignVanity = (profile.included.filter(
+          (i) => i.type === 'campaign' && i.id === profile.data.relationships.campaign?.data?.id
+        ) || [])[0]?.attributes?.vanity
         return {
           id: profile.data.id,
-          name: profile.data.attributes.full_name,
-          email: undefined,
+          name: campaignVanity || profile.data.attributes.full_name,
+          email: profile.data.attributes.full_name,
           image: profile.data.attributes.thumb_url,
         }
       },
