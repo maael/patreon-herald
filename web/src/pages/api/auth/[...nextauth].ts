@@ -13,7 +13,7 @@ export const authOptions: AuthOptions = {
         'fields[user]=email,full_name,image_url,thumb_url'
       )}&${encodeURI('fields[campaign]=vanity,url')}`,
       async profile(profile) {
-        const campaignVanity = (profile.included.filter(
+        const campaignVanity = ((profile.included || []).filter(
           (i) => i.type === 'campaign' && i.id === profile.data.relationships.campaign?.data?.id
         ) || [])[0]?.attributes?.vanity
         return {
