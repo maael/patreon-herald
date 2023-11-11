@@ -12,7 +12,6 @@ div#__next {
   height: 100%;
   width: 100%;
   font-family: Dosis, Arial, Helvetica, sans-serif;
-  @apply bg-gray-100;
 }
 
 div#__next {

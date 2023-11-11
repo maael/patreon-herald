@@ -141,6 +141,46 @@ export const campaigns = {
     )
   },
   /**
+   * Associate twitch tokens with campaigns
+   */
+  updateCampaignPatreonTokens: async (
+    resourceType: 'patreonCampaign' | 'owner',
+    resourceId: string,
+    patreonAccessToken?: string,
+    patreonRefreshToken?: string
+  ) => {
+    try {
+      if (!resourceId || !patreonAccessToken || !patreonRefreshToken) {
+        console.warn('Failed to update patreon tokens')
+        return
+      }
+      await dbConnect()
+      const query =
+        resourceType === 'owner'
+          ? {
+              ownerPatreonId: resourceId,
+            }
+          : {
+              patreonCampaignId: resourceId,
+            }
+      await CampaignModel.updateMany(query, {
+        patreonAccessToken,
+        patreonRefreshToken,
+      })
+    } catch (e) {
+      console.warn('Failed to update patreon tokens', e)
+    }
+  },
+  getPatreonTokens: async (patreonCampaignId: string) => {
+    return CampaignModel.findOne(
+      { patreonCampaignId },
+      {
+        patreonAccessToken: 1,
+        patreonRefreshToken: 1,
+      }
+    ).lean()
+  },
+  /**
    * When a creator enables for a campaign
    */
   createForPatreonCampaign: async (patreonId: string, patreonCampaignData: any, accessToken?: string) => {
@@ -164,7 +204,6 @@ export const campaigns = {
    * Update campaign settings
    */
   updateCampaignSettings: async (campaignId: string, settings: Pick<Campaign, 'entitledCriteria'>) => {
-    console.info({ campaignId, settings })
     return CampaignModel.updateOne({ _id: campaignId }, { entitledCriteria: settings.entitledCriteria })
   },
   /**
@@ -412,21 +451,31 @@ export const patreon = {
       },
     }).then((r) => r.json())
   },
-  getInitialMembers: async (accessToken: string, campaignId: string) => {
+  getInitialMembers: async (patreonCampaignId: string) => {
     let cursor = null
     let data: {
       tiers: { amount_cents: number; title: string; id: string }[]
       user: { full_name: string; thumb_url: string; id: string }
     }[] = []
     try {
+      const campaign = await campaigns.getPatreonTokens(patreonCampaignId)
+      if (!campaign?.patreonAccessToken || !campaign?.patreonRefreshToken) {
+        console.warn('Failed to get initial members, no tokens')
+        return []
+      }
       do {
-        const page = await patreon.getMembersPage(accessToken, campaignId, cursor)
-        console.info('[getInitialMembers]', { campaignId, cursor })
+        const page = await patreon.getMembersPage(
+          campaign?.patreonAccessToken,
+          campaign?.patreonRefreshToken,
+          patreonCampaignId,
+          cursor
+        )
+        console.info('[getInitialMembers]', { patreonCampaignId, cursor })
         const linkedUsers = new Map<string, any>(
-          page.included.filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
+          (page.included || []).filter((r) => r.type === 'user').map((r) => [r.id, { ...r.attributes, id: r.id }])
         )
         const linkedTiers = new Map<string, any>(
-          page.included.filter((r) => r.type === 'tier').map((r) => [r.id, { ...r.attributes, id: r.id }])
+          (page.included || []).filter((r) => r.type === 'tier').map((r) => [r.id, { ...r.attributes, id: r.id }])
         )
         data = data.concat(
           page.data.map((d) => {
@@ -446,20 +495,82 @@ export const patreon = {
       return []
     }
   },
-  getMembersPage: async (accessToken: string, campaignId: string, cursor: string | null) => {
+  getMembersPage: async (
+    accessToken: string,
+    refreshToken: string,
+    patreonCampaignId: string,
+    cursor: string | null
+  ) => {
+    return patreon
+      .safeFetch(
+        `https://www.patreon.com/api/oauth2/v2/campaigns/${patreonCampaignId}/members?${encodeURI(
+          `include=currently_entitled_tiers,user&fields[user]=full_name,thumb_url&fields[tier]=title,amount_cents&page[count]=500${
+            cursor ? '&page[cursor]=${cursor}' : ''
+          }`
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+        patreonCampaignId,
+        accessToken,
+        refreshToken
+      )
+      .then((r) => r.json())
+  },
+  refreshToken: async (refreshToken: string) => {
     return fetch(
-      `https://www.patreon.com/api/oauth2/v2/campaigns/${campaignId}/members?${encodeURI(
-        `include=currently_entitled_tiers,user&fields[user]=full_name,thumb_url&fields[tier]=title,amount_cents&page[count]=500${
-          cursor ? '&page[cursor]=${cursor}' : ''
-        }`
+      `https://patreon.com/api/oauth2/token?grant_type=refresh_token&refresh_token=${encodeURIComponent(
+        refreshToken
+      )}&client_id=${encodeURIComponent(process.env.PATREON_SECRET || '')}&client_secret=${encodeURIComponent(
+        process.env.PATREON_ID || ''
       )}`,
       {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        method: 'POST',
       }
-    ).then((r) => r.json())
+    )
+      .then((r) => r.json())
+      .then((data) => ({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresIn: data.expires_in,
+        scope: data.scope,
+        token_type: 'Bearer',
+      }))
+  },
+  safeFetch: async (
+    init: Parameters<typeof fetch>[0],
+    config: Parameters<typeof fetch>[1],
+    patreonCampaignId: string,
+    accessToken: string,
+    refreshToken: string,
+    repeat = false
+  ) => {
+    const result = await fetch(init, {
+      ...config,
+      headers: {
+        ...config?.headers,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    if (result.status === 401 && !repeat) {
+      const newTokens = await patreon.refreshToken(refreshToken)
+      await campaigns.updateCampaignPatreonTokens(
+        'patreonCampaign',
+        patreonCampaignId,
+        newTokens.accessToken || accessToken,
+        newTokens.refreshToken || refreshToken
+      )
+      return patreon.safeFetch(init, config, patreonCampaignId, accessToken, refreshToken, true)
+    }
+    return result
+  },
+  getPatreonMembersList: async (campaignId: string) => {
+    await dbConnect()
+    const members = await patreon.getInitialMembers(campaignId)
+    return { members }
   },
 }
 

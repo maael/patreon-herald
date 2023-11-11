@@ -59,10 +59,7 @@ const handler: NextApiHandler = async (req, res) => {
     const pathParts = req.query.path || []
     if (pathParts[0] === 'members') {
       const campaignId = pathParts[1]
-      const patreons = await patreon.getInitialMembers(
-        `${(req.headers.authorization?.split(' ') || [])[1]}`,
-        campaignId
-      )
+      const patreons = await patreon.getInitialMembers(campaignId)
 
       console.info(`[patreon] Found ${patreons.length} patreons`)
 

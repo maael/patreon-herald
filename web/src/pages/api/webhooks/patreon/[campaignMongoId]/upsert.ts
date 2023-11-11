@@ -4,7 +4,7 @@ import { Body, IncludedTier } from '~/types'
 
 const handler: NextApiHandler = async (req, res) => {
   const body: Body = req.body
-  const campaignId = req.query.campaignMongoId.toString()
+  const campaignId = req.query.campaignMongoId?.toString() || ''
   const patronId = body.data.relationships.user.data.id
   const currentlyEntitledTiers = body.data.relationships.currently_entitled_tiers.data.map((d) => d.id)
   const includedTiers = body.included.reduce((acc, t) => {

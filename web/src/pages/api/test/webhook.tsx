@@ -6,7 +6,11 @@ const handler: NextApiHandler = async (req, res) => {
   if (!accessToken) return res.status(400).json({ error: 'Needs access token' })
   if (!type) return res.status(400).json({ error: 'Define type' })
   if (type === 'post') {
-    const data = await patreon.makeWebhooks(req.query.accessToken.toString(), '63e52b8e8a76b230774bab57', '9441253')
+    const data = await patreon.makeWebhooks(
+      req.query.accessToken?.toString() || '',
+      '63e52b8e8a76b230774bab57',
+      '9441253'
+    )
     res.json({ type, data })
   } else if (type === 'patch') {
     const fetchRes = await fetch('https://www.patreon.com/api/oauth2/v2/webhooks/526532', {
@@ -41,10 +45,10 @@ const handler: NextApiHandler = async (req, res) => {
   } else if (type === 'members') {
     res.json({
       type,
-      data: await patreon.getInitialMembers(req.query.accessToken.toString(), req.query.campaignId.toString()),
+      data: await patreon.getInitialMembers(req.query.campaignId?.toString() || ''),
     })
   } else if (type === 'get') {
-    const data = await patreon.getWebhooks(req.query.accessToken.toString())
+    const data = await patreon.getWebhooks(req.query.accessToken?.toString() || '')
     res.json({ type: 'get', data })
   }
 }

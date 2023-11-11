@@ -106,8 +106,10 @@ function Campaign({
   campaignData,
 }) {
   const twitchUserName = (session?.data as any)?.twitch?.username
-  const obsUrl = `https://patreon-herald.mael.tech/obs/alert/${twitchUserName}/${campaign.id}`
-  const [copied, copy] = useCopyToClipboard(obsUrl)
+  const soundObsUrl = `https://patreon-herald.mael.tech/obs/alert/${twitchUserName}/${campaign.id}`
+  const listObsUrl = `https://patreon-herald.mael.tech/obs/patreon/${twitchUserName}/${campaign.id}`
+  const [copiedSound, copySound] = useCopyToClipboard(soundObsUrl)
+  const [copiedList, copyList] = useCopyToClipboard(listObsUrl)
   const isActive = internalCampaignData?.data?.has(campaign.id)
   const internalCampaign = internalCampaignData?.data?.get(campaign.id)
   return (
@@ -156,33 +158,49 @@ function Campaign({
           <h2 className="text-bold text-2xl">{campaign.attributes.name}</h2>
           <h3>{campaign.attributes.creation_name}</h3>
         </div>
-        <div className="w-full flex flex-row justify-between items-center">
+        <div className="w-full flex flex-row justify-between items-center gap-2">
           {isActive ? (
             <>
-              <button
-                className="gap-2"
-                onClick={() => {
-                  if (managing) {
-                    setManaging(undefined)
-                  } else {
-                    window.location.hash = campaign.id
-                    setManaging(campaign.id)
-                  }
-                }}
-              >
-                {managing ? <FaChevronCircleUp /> : <FaChevronCircleDown />} Manage
-              </button>
+              <div className="flex-1">
+                <button
+                  className="gap-2"
+                  onClick={() => {
+                    if (managing) {
+                      setManaging(undefined)
+                    } else {
+                      window.location.hash = campaign.id
+                      setManaging(campaign.id)
+                    }
+                  }}
+                >
+                  {managing ? <FaChevronCircleUp /> : <FaChevronCircleDown />} Manage
+                </button>
+              </div>
               <div className="flex flow-row flex-nowrap drop-shadow">
                 <div className="bg-orange-400 rounded-l-md text-white flex justify-center items-center px-3 gap-2">
-                  <SiObsstudio /> {twitchUserName ? 'OBS Source URL' : 'Connect Twitch Account for OBS Source'}
+                  <SiObsstudio /> {twitchUserName ? 'OBS List Overlay' : 'Connect Twitch Account for overlays'}
                 </div>
                 {twitchUserName ? (
                   <button
                     className="bg-black text-white flex justify-center items-center px-3"
                     style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-                    onClick={() => copy()}
+                    onClick={() => copyList()}
                   >
-                    {copied ? <FaCheck /> : <FaCopy />}
+                    {copiedList ? <FaCheck /> : <FaCopy />}
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flow-row flex-nowrap drop-shadow">
+                <div className="bg-orange-400 rounded-l-md text-white flex justify-center items-center px-3 gap-2">
+                  <SiObsstudio /> {twitchUserName ? 'OBS Sound Overlay' : 'Connect Twitch Account for overlays'}
+                </div>
+                {twitchUserName ? (
+                  <button
+                    className="bg-black text-white flex justify-center items-center px-3"
+                    style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                    onClick={() => copySound()}
+                  >
+                    {copiedSound ? <FaCheck /> : <FaCopy />}
                   </button>
                 ) : null}
               </div>
