@@ -81,7 +81,7 @@ const internalApi: { [k: string]: NextApiHandler } = {
    */
   getUserSounds: async (req, res) => {
     const pathParts = req.query.path || []
-    await campaigns.getUserSounds(req.query.ids.toString().split(','), pathParts[1])
+    await campaigns.getUserSounds(req.query.ids?.toString()?.split(',') || [], pathParts[1])
     res.json({ ok: 1 })
   },
   /**

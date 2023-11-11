@@ -1,7 +1,7 @@
 import NextAuth, { AuthOptions } from 'next-auth'
 import TwitchProvider from 'next-auth/providers/twitch'
 import PatreonProvider from 'next-auth/providers/patreon'
-import { connection } from '~/api'
+import { campaigns, connection } from '~/api'
 
 export const authOptions: AuthOptions = {
   // Configure one or more authentication providers
@@ -74,6 +74,14 @@ export const authOptions: AuthOptions = {
         token.accessToken = account?.access_token
         token.refreshToken = account?.refresh_token
         token.uid = account?.providerAccountId
+        if (account?.providerAccountId) {
+          await campaigns.updateCampaignPatreonTokens(
+            'owner',
+            account?.providerAccountId,
+            account?.access_token,
+            account?.refresh_token
+          )
+        }
       }
       return token
     },

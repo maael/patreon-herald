@@ -38,6 +38,8 @@ export interface Campaign {
   customUsers: string[]
   twitchAccessToken?: string
   twitchRefreshToken?: string
+  patreonAccessToken?: string
+  patreonRefreshToken?: string
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -100,6 +102,8 @@ const itemSchema = new Schema<WithDoc<Campaign>, ItemModel>(
     },
     twitchAccessToken: String,
     twitchRefreshToken: String,
+    patreonAccessToken: String,
+    patreonRefreshToken: String,
   },
   {
     id: true,
