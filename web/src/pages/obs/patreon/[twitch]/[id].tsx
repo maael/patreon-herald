@@ -70,7 +70,7 @@ function PatreonList({ config, members }: { config: Config; members?: PatreonMem
       <h1 style={getStyles('title', config)} className="text-center">
         {config.title}
       </h1>
-      <div className="flex flex-row flex-wrap justify-around content-around gap-5 flex-1">
+      <div className="flex flex-row flex-wrap justify-around gap-5 flex-1">
         {tierBlocks.map((t) => {
           return <TierBlock key={t.id} title={t.title} members={t.members} config={config} />
         })}
