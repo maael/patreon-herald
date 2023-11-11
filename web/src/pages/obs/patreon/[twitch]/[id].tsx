@@ -66,8 +66,11 @@ function PatreonList({ config, members }: { config: Config; members?: PatreonMem
   ).sort((a, b) => (config.tierOrdering === 'highestFirst' ? b.amount - a.amount : a.amount - b.amount))
 
   return (
-    <div className="p-5 flex-1 flex flex-col gap-5 font-bold">
-      <h1 style={getStyles('title', config)} className="text-center">
+    <div className="p-5 flex-1 flex flex-col gap-5 font-bold overflow-hidden">
+      <h1
+        style={{ ...getStyles('title', config), height: '10vh', flexShrink: 0, fontSize: '5vh' }}
+        className="text-center flex justify-center items-center"
+      >
         {config.title}
       </h1>
       <div className="flex flex-row flex-wrap justify-around gap-5 flex-1">
@@ -81,14 +84,22 @@ function PatreonList({ config, members }: { config: Config; members?: PatreonMem
 
 function TierBlock({ title, members, config }: { title: string; members: PatreonMember['user'][]; config: Config }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 flex-1">
       <h2 className="text-center" style={getStyles('tier', config)}>
         {title}
       </h2>
-      <div className="flex flex-col justify-center items-center">
+      <div style={{ display: 'flex', alignItems: 'center', flexFlow: 'column wrap', height: '85vh', gap: 5 }}>
         {members.map((m) => {
           return (
-            <div key={m.id} style={getStyles('patreons', config)} className="text-center">
+            <div
+              key={m.id}
+              style={{
+                ...getStyles('patreons', config),
+                flex: '0 1',
+                textAlign: 'center',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {config.patreonsName === 'preferTwitch' ? m.twitch?.displayName || m.full_name : m.full_name}
             </div>
           )
