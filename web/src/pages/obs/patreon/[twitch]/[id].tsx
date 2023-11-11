@@ -89,7 +89,7 @@ function TierBlock({ title, members, config }: { title: string; members: Patreon
         {members.map((m) => {
           return (
             <div key={m.id} style={getStyles('patreons', config)} className="text-center">
-              {m.full_name}
+              {config.patreonsName === 'preferTwitch' ? m.twitch?.displayName || m.full_name : m.full_name}
             </div>
           )
         })}

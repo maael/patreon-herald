@@ -10,6 +10,7 @@ export const DEFAULT_CONFIG = {
   patreonsColor: '#F97316',
   patreonsSize: '1.5rem',
   tierOrdering: 'highestFirst',
+  patreonsName: 'preferPatreon',
 }
 
 export type Config = typeof DEFAULT_CONFIG
