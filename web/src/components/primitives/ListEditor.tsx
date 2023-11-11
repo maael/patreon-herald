@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocalStorage } from '@uidotdev/usehooks'
 import Select from 'react-select'
 import { FaImage, FaSyncAlt } from 'react-icons/fa'
@@ -193,11 +194,18 @@ export function ListEditor({ config, setConfig, twitch, patreonCampaignId }: Pro
           </div>
         )}
         <iframe
-          ref={iframeRef}
           src={`/obs/patreon/${twitch}/${patreonCampaignId}?${previewConfig}`}
           className="w-full bg-gray-100 rounded-md"
           height={500}
         />
+        {createPortal(
+          <iframe
+            ref={iframeRef}
+            src={`/obs/patreon/${twitch}/${patreonCampaignId}?${previewConfig}`}
+            className="w-full h-full bg-gray-100 rounded-md absolute inset-0 -z-50 invisible"
+          />,
+          document.body
+        )}
       </div>
     </div>
   )
