@@ -10,8 +10,18 @@ import { TwitchPrompt } from '~/components/primitives/Twitch'
 import Link from 'next/link'
 import Banner from '~/components/primitives/Banner'
 import useRestrictedRoute from '~/components/hooks/useRestrictRoute'
-import { FaCheck, FaChevronCircleDown, FaChevronCircleUp, FaCopy, FaPlus, FaRedoAlt, FaTimes } from 'react-icons/fa'
+import {
+  FaCheck,
+  FaChevronCircleDown,
+  FaChevronCircleUp,
+  FaCogs,
+  FaCopy,
+  FaPlus,
+  FaRedoAlt,
+  FaTimes,
+} from 'react-icons/fa'
 import useCopyToClipboard from '~/components/hooks/useCopyToClipboard'
+import { ListEditor, useListConfig } from '~/components/primitives/ListEditor'
 
 export default function CreatorManage() {
   useRestrictedRoute()
@@ -106,8 +116,12 @@ function Campaign({
   campaignData,
 }) {
   const twitchUserName = (session?.data as any)?.twitch?.username
+  const [editingList, setEditingList] = React.useState(false)
+  const [listConfig, setListConfig] = useListConfig()
   const soundObsUrl = `https://patreon-herald.mael.tech/obs/alert/${twitchUserName}/${campaign.id}`
-  const listObsUrl = `https://patreon-herald.mael.tech/obs/patreon/${twitchUserName}/${campaign.id}`
+  const listObsUrl = `https://patreon-herald.mael.tech/obs/patreon/${twitchUserName}/${
+    campaign.id
+  }?${new URLSearchParams(listConfig)}`
   const [copiedSound, copySound] = useCopyToClipboard(soundObsUrl)
   const [copiedList, copyList] = useCopyToClipboard(listObsUrl)
   const isActive = internalCampaignData?.data?.has(campaign.id)
@@ -181,13 +195,22 @@ function Campaign({
                   <SiObsstudio /> {twitchUserName ? 'OBS List Overlay' : 'Connect Twitch Account for overlays'}
                 </div>
                 {twitchUserName ? (
-                  <button
-                    className="bg-black text-white flex justify-center items-center px-3"
-                    style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-                    onClick={() => copyList()}
-                  >
-                    {copiedList ? <FaCheck /> : <FaCopy />}
-                  </button>
+                  <>
+                    <button
+                      className="bg-black text-white flex justify-center items-center px-3 rounded-none border-r border-orange-400"
+                      style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                      onClick={() => copyList()}
+                    >
+                      {copiedList ? <FaCheck /> : <FaCopy />}
+                    </button>{' '}
+                    <button
+                      className="bg-black text-white flex justify-center items-center px-3 border-l border-orange-400"
+                      style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                      onClick={() => setEditingList((e) => !e)}
+                    >
+                      <FaCogs />
+                    </button>
+                  </>
                 ) : null}
               </div>
               <div className="flex flow-row flex-nowrap drop-shadow">
@@ -225,6 +248,15 @@ function Campaign({
             </button>
           )}
         </div>
+
+        {editingList ? (
+          <ListEditor
+            config={listConfig}
+            setConfig={setListConfig}
+            twitch={twitchUserName}
+            patreonCampaignId={campaign.id}
+          />
+        ) : null}
       </div>
 
       {managing ? (

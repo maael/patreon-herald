@@ -44,3 +44,103 @@
 .font-dosis {
   font-family: Dosis, Arial, Helvetica, sans-serif;
 }
+
+@font-face {
+  font-family: 'Norwester';
+  src: url(/fonts/norwester.otf);
+}
+
+@font-face {
+  font-family: '1942';
+  src: url(/fonts/1942.ttf);
+}
+
+@font-face {
+  font-family: 'ActionMan';
+  src: url(/fonts/Action_Man.ttf);
+}
+
+@font-face {
+  font-family: 'BadScript';
+  src: url(/fonts/BadScript-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'Baloo';
+  src: url(/fonts/Baloo-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'BerkshireWash';
+  src: url(/fonts/berkshirewash-regular.ttf);
+}
+
+@font-face {
+  font-family: 'CaviarDreams';
+  src: url(/fonts/CaviarDreams.ttf);
+}
+
+@font-face {
+  font-family: 'GreatVibes';
+  src: url(/fonts/GreatVibes-Regular.otf);
+}
+
+@font-face {
+  font-family: 'JINKY';
+  src: url(/fonts/JINKY.ttf);
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url(/fonts/Lato-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'LeagueGothic';
+  src: url(/fonts/LeagueGothic-Regular.otf);
+}
+
+@font-face {
+  font-family: 'LeagueSpartan';
+  src: url(/fonts/LeagueSparten-Bold.otf);
+}
+
+@font-face {
+  font-family: 'Lobster';
+  src: url(/fonts/Lobster_1.3.otf);
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url(/fonts/Montserrat-Regular.otf);
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url(/fonts/Quicksand-Regular.otf);
+}
+
+@font-face {
+  font-family: 'Reey';
+  src: url(/fonts/Reey-Regular.otf);
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url(/fonts/Roboto-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'SeasideResort';
+  src: url(/fonts/SeasideResort-Regular.ttf);
+}
+
+@font-face {
+  font-family: 'SourceCodePro';
+  src: url(/fonts/SourceCodePro-Regular.otf);
+}
+
+@font-face {
+  font-family: 'SourceSansPro';
+  src: url(/fonts/SourceSansPro-Regular.otf);
+}

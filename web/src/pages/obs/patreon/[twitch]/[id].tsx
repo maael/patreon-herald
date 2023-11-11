@@ -1,28 +1,15 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { Config, DEFAULT_CONFIG } from '~/util/list'
 
 interface PatreonMember {
   tiers: { title: string; id: string; amount_cents: number }[]
   user: { id: string; full_name: string; thumb_url: string; twitch?: { displayName: string; image: string } }
 }
 
-const BASE_CONFIG = {
-  title: 'Patreons',
-  titleFont: 'GwTwo',
-  titleColor: 'rgb(147 51 234)',
-  titleSize: '4rem',
-  tierColor: 'rgb(147 51 234)',
-  tierSize: '2.5rem',
-  tierFont: '',
-  patreonsFont: '',
-  patreonsColor: 'rgb(234 88 12)',
-  patreonsSize: '1.5rem',
-  ordering: 'highestFirst',
-}
-
 export default function PatreonListPage() {
   const { query } = useRouter()
-  const config = { ...BASE_CONFIG, ...query }
+  const config = { ...DEFAULT_CONFIG, ...query }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [members, setMembers] = useState<PatreonMember[]>()
@@ -30,9 +17,11 @@ export default function PatreonListPage() {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;(async () => {
       try {
-        setLoading(true)
-        const result = await fetch(`/api/patreon/members/${query?.id}`).then((r) => r.json())
-        setMembers(result)
+        if (query?.id) {
+          setLoading(true)
+          const result = await fetch(`/api/patreon/members/${query?.id}`).then((r) => r.json())
+          setMembers(result)
+        }
       } catch (e) {
         console.warn('error', e)
         setError(true)
@@ -48,7 +37,7 @@ export default function PatreonListPage() {
   )
 }
 
-function getStyles(type: string, config: typeof BASE_CONFIG) {
+function getStyles(type: string, config: Config) {
   return {
     color: config[`${type}Color`],
     fontSize: config[`${type}Size`],
@@ -56,7 +45,7 @@ function getStyles(type: string, config: typeof BASE_CONFIG) {
   }
 }
 
-function PatreonList({ config, members }: { config: typeof BASE_CONFIG; members?: PatreonMember[] }) {
+function PatreonList({ config, members }: { config: Config; members?: PatreonMember[] }) {
   if (!members || members.length === 0) return null
 
   const tierBlocks = Object.values<{ title: string; amount: number; members: any[]; id: string }>(
@@ -74,7 +63,7 @@ function PatreonList({ config, members }: { config: typeof BASE_CONFIG; members?
       }
       return acc
     }, {})
-  ).sort((a, b) => (config.ordering === 'highestFirst' ? b.amount - a.amount : a.amount - b.amount))
+  ).sort((a, b) => (config.tierOrdering === 'highestFirst' ? b.amount - a.amount : a.amount - b.amount))
 
   return (
     <div className="p-5 flex-1 flex flex-col gap-5 font-bold">
@@ -90,15 +79,7 @@ function PatreonList({ config, members }: { config: typeof BASE_CONFIG; members?
   )
 }
 
-function TierBlock({
-  title,
-  members,
-  config,
-}: {
-  title: string
-  members: PatreonMember['user'][]
-  config: typeof BASE_CONFIG
-}) {
+function TierBlock({ title, members, config }: { title: string; members: PatreonMember['user'][]; config: Config }) {
   return (
     <div className="flex flex-col gap-1">
       <h2 className="text-center" style={getStyles('tier', config)}>
