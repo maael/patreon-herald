@@ -11,6 +11,7 @@ export const DEFAULT_CONFIG = {
   patreonsSize: '1.5rem',
   tierOrdering: 'highestFirst',
   patreonsName: 'preferPatreon',
+  showFreeTier: 'hide',
 }
 
 export type Config = typeof DEFAULT_CONFIG
