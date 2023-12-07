@@ -127,6 +127,13 @@ const FONT_OPTIONS = [
   { label: 'Source Sans Pro', value: 'SourceSansPro' },
 ]
 
+const OUTLINE_OPTIONS = [
+  { label: 'None', value: 'None' },
+  { label: 'Small', value: 'Small' },
+  { label: 'Medium', value: 'Medium' },
+  { label: 'Large', value: 'Large' },
+]
+
 export function ListEditor({ config, setConfig, twitch, patreonCampaignId }: Props) {
   const [previewConfig, setPreviewConfig] = useState(() => new URLSearchParams(config))
   const currentConfigString = useMemo(() => new URLSearchParams(config).toString(), [config])
@@ -174,6 +181,12 @@ export function ListEditor({ config, setConfig, twitch, patreonCampaignId }: Pro
         <Color name="titleColor" config={config} setConfig={setConfig} />
         <Color name="tierColor" config={config} setConfig={setConfig} />
         <Color name="patreonsColor" config={config} setConfig={setConfig} />
+        <Dropdown name="titleOutlineSize" config={config} setConfig={setConfig} options={OUTLINE_OPTIONS} />
+        <Dropdown name="tierOutlineSize" config={config} setConfig={setConfig} options={OUTLINE_OPTIONS} />
+        <Dropdown name="patreonsOutlineSize" config={config} setConfig={setConfig} options={OUTLINE_OPTIONS} />
+        <Color name="titleOutlineColor" config={config} setConfig={setConfig} />
+        <Color name="tierOutlineColor" config={config} setConfig={setConfig} />
+        <Color name="patreonsOutlineColor" config={config} setConfig={setConfig} />
       </div>
       <div className="text-center bg-red-600 text-white rounded-md inline-block mx-auto px-5 py-1 mt-2">
         Make sure to get the new overlay URL from above when you're done!

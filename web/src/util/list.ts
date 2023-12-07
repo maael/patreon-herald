@@ -12,6 +12,12 @@ export const DEFAULT_CONFIG = {
   tierOrdering: 'highestFirst',
   patreonsName: 'preferPatreon',
   showFreeTier: 'hide',
+  titleOutlineSize: 'None',
+  tierOutlineSize: 'None',
+  patreonOutlineSize: 'None',
+  titleOutlineColor: '#9333ea',
+  tierOutlineColor: '#9333ea',
+  patreonsOutlineColor: '#F97316',
 }
 
 export type Config = typeof DEFAULT_CONFIG

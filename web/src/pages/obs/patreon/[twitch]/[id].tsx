@@ -8,6 +8,32 @@ interface PatreonMember {
   user: { id: string; full_name: string; thumb_url: string; twitch?: { displayName: string; image: string } }
 }
 
+const wait = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function retry(fn: () => Promise<void>, options: { limit: number; wait: number }) {
+  let complete = false
+  let tries = 0
+  let lastError: Error | null = null
+  do {
+    tries = tries + 1
+    try {
+      await fn()
+      complete = true
+    } catch (e) {
+      console.error('Retry error:', e)
+      if (tries >= options.limit) {
+        lastError = e
+        complete = true
+      } else {
+        await wait(options.wait)
+      }
+    }
+  } while (!complete)
+  if (lastError) {
+    throw lastError
+  }
+}
+
 export default function PatreonListPage() {
   const { query } = useRouter()
   const config = { ...DEFAULT_CONFIG, ...query }
@@ -19,9 +45,17 @@ export default function PatreonListPage() {
     ;(async () => {
       try {
         if (query?.id) {
-          setLoading(true)
-          const result = await fetch(`/api/patreon/members/${query?.id}`).then((r) => r.json())
-          setMembers(result)
+          retry(
+            async () => {
+              setLoading(true)
+              const result = await fetch(`/api/patreon/members/${query?.id}`).then((r) => r.json())
+              setMembers(result)
+            },
+            {
+              limit: 5,
+              wait: 1_000,
+            }
+          )
         }
       } catch (e) {
         console.warn('error', e)
@@ -32,10 +66,17 @@ export default function PatreonListPage() {
     })()
   }, [query?.id])
   return error ? (
-    <div>Sorry, something went wrong!</div>
+    <div className="text-center">Sorry, something went wrong!</div>
   ) : loading ? null : (
     <PatreonList config={config} members={members} />
   )
+}
+
+const OUTLINE_SIZE_MAP = {
+  None: '0px',
+  Small: '1px',
+  Medium: '2px',
+  Large: '5px',
 }
 
 function getStyles(type: string, config: Config) {
@@ -43,6 +84,8 @@ function getStyles(type: string, config: Config) {
     color: config[`${type}Color`],
     fontSize: config[`${type}Size`],
     fontFamily: config[`${type}Font`],
+    textStroke: `${OUTLINE_SIZE_MAP[config[`${type}OutlineSize`] || 'None']} ${config[`${type}OutlineColor`]}`,
+    WebkitTextStroke: `${OUTLINE_SIZE_MAP[config[`${type}OutlineSize`] || 'None']} ${config[`${type}OutlineColor`]}`,
   }
 }
 
