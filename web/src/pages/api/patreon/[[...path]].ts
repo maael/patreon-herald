@@ -22,7 +22,7 @@ function mapResult(pathParts, result) {
     const linkedCampaigns = new Map<string, any>(
       result.included
         .filter((r) => r.type === 'campaign')
-        .map((r) => [r.id, { ...r.attributes, creator: linkedUsers.get(r.relationships.creator.data.id), id: r.id }])
+        .map((r) => [r.id, { ...r.attributes, creator: linkedUsers.get(r.relationships?.creator?.data?.id), id: r.id }])
     )
     const linkedMembers = new Map<string, any>(
       result.included
@@ -99,7 +99,8 @@ const handler: NextApiHandler = async (req, res) => {
       res.json(result)
     }
   } catch (e) {
-    res.json({ error: e })
+    console.error('[error]', e)
+    res.status(500).json({ error: e })
   }
 }
 
