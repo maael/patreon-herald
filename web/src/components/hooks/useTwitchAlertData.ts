@@ -30,10 +30,12 @@ export default function useTwitchAlertData(id?: string) {
                   !c?.patreon?.id?.startsWith('custom-')
                 )
                   return
-                return [
-                  c.twitch.id,
-                  { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}`, volume: sound.volume || 1 },
-                ]
+                return c?.twitch?.id
+                  ? [
+                      c.twitch.id,
+                      { ...c, ...sound, sound: `https://files.mael-cdn.com${sound.sound}`, volume: sound.volume || 1 },
+                    ]
+                  : undefined
               })
               .filter(Boolean)
           )
