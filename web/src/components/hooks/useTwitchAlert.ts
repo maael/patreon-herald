@@ -2,6 +2,10 @@ import { useQueue } from '@uidotdev/usehooks'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import tmi from 'tmi.js'
 
+function isReset(twitch: string | undefined, id: string, tags: any) {
+  return (id === '69496551' || tags.username === twitch) && tags.msg === '[RESET]'
+}
+
 function setupClient(onMessage: (tags: any, client: any) => void, twitch?: string, token?: string) {
   console.info('[setup_client]')
   const client = new tmi.Client({
@@ -17,8 +21,9 @@ function setupClient(onMessage: (tags: any, client: any) => void, twitch?: strin
     options: { updateEmotesetsTimer: 0, skipUpdatingEmotesets: true },
   })
   client.on('connected', () => console.info('[connected]', client.readyState()))
-  client.on('message', (_channel, tags) => {
+  client.on('message', (_channel, tags, msg) => {
     console.info('[message]')
+    tags.msg = msg
     onMessage(tags, client)
   })
   client.connect()
@@ -57,6 +62,12 @@ export default function useTwitchAlert(twitch?: string, token?: string, data?: M
       const userId = tags['user-id']
       if (!userId) {
         console.warn('Skipping, no user id')
+        return
+      }
+      if (isReset(twitch, userId, tags)) {
+        console.warn('Resetting...')
+        client?.say(twitch, 'Resetting Patreon Herald overlay...')
+        window.location.reload()
         return
       }
       if (seenList.current.has(userId)) {
