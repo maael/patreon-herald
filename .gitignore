@@ -147,3 +147,6 @@ app/resources/js/*.js
 app/resources/js/*.css
 app/resources/styles.css
 app/bin/*
+
+# Vercel
+.vercel
